@@ -1,0 +1,38 @@
+# ========== dotnet ==========
+# Компилированные бинарные файлы
+bin/
+obj/
+# Файлы конфигурации пользователя VS
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+# Папка настроек VSCode
+.vscode/
+
+# EF Миграции (если не хотите хранить в репо)
+# src/Infrastructure/Migrations/
+
+# ========== React ==========
+# node_modules
+clientapp/node_modules/
+# сборка фронтенда
+clientapp/build/
+# временные файлы npm
+clientapp/.npm
+clientapp/.cache
+# локальные env-файлы
+clientapp/.env.local
+clientapp/.env.development.local
+clientapp/.env.test.local
+clientapp/.env.production.local
+
+# ========== Общее ==========
+# Логи
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+# OS-специфичные
+.DS_Store
+Thumbs.db
