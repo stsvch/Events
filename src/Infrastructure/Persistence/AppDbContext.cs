@@ -15,7 +15,9 @@ namespace Events.Infrastructure.Persistence
         public DbSet<Participant> Participants { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<EventImage> EventImages { get; set; }
-        public DbSet<EventParticipant> EventParticipants { get; set; }  
+        public DbSet<EventParticipant> EventParticipants { get; set; }
+
+        public AppDbContext(DbContextOptions<AppDbContext> options): base(options) { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
