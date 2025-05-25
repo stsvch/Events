@@ -10,5 +10,7 @@ namespace Events.Application.Interfaces
     {
         Task<string> UploadAsync(Stream fileStream, string fileName, CancellationToken ct = default);
         Task DeleteAsync(string publicId, CancellationToken ct = default);
+
+        Task<Stream> GetAsync(string publicId, CancellationToken ct = default);
     }
 }

@@ -8,12 +8,5 @@ using System.Threading.Tasks;
 
 namespace Events.Application.Validators
 {
-    public class DeleteEventCommandValidator : AbstractValidator<DeleteEventCommand>
-    {
-        public DeleteEventCommandValidator()
-        {
-            RuleFor(x => x.Id)
-                .NotEmpty().WithMessage("Event Id is required.");
-        }
-    }
+    public class DeleteEventCommandValidator : HasIdValidator<DeleteEventCommand> { }
 }

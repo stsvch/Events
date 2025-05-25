@@ -6,7 +6,8 @@ using System.Threading.Tasks;
 
 namespace Events.Application.Common
 {
-    internal interface IHasEventId
+    public interface IHasEventId
     {
+        Guid EventId { get; }
     }
 }

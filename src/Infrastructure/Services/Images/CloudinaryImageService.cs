@@ -1,16 +1,11 @@
 ﻿using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 using Events.Application.Interfaces;
+using Events.Infrastructure.Settings;
 using Microsoft.Extensions.Options;
 
 namespace Events.Infrastructure.Services.Images
 {
-    public class CloudinarySettings
-    {
-        public string CloudName { get; set; }
-        public string ApiKey { get; set; }
-        public string ApiSecret { get; set; }
-    }
 
     public class CloudinaryImageService : IImageStorageService
     {
@@ -38,6 +33,15 @@ namespace Events.Infrastructure.Services.Images
         {
             var deletionParams = new DeletionParams(publicId);
             await _cloudinary.DestroyAsync(deletionParams); 
+        }
+
+        public async Task<Stream> GetAsync(string publicId, CancellationToken ct = default)
+        {
+            var url = _cloudinary.Api.UrlImgUp.BuildUrl(publicId);
+            var http = new HttpClient();
+            var response = await http.GetAsync(url, ct);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsStreamAsync(ct);
         }
     }
 }

@@ -3,11 +3,7 @@ using Events.Infrastructure.Identity;
 using Microsoft.AspNetCore.ApiAuthorization.IdentityServer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Events.Infrastructure.Persistence
 {
@@ -23,7 +19,6 @@ namespace Events.Infrastructure.Persistence
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
-            // тут можно настраивать таблички, если нужно
         }
     }
 }

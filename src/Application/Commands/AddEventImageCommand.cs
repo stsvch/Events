@@ -1,13 +1,10 @@
-﻿using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Events.Application.Common;
+using MediatR;
+
 
 namespace Events.Application.Commands
 {
-    public class AddEventImageCommand : IRequest<Unit>
+    public class AddEventImageCommand : IRequest<Unit>, IHasEventId
     {
         public Guid EventId { get; set; }
         public string Url { get; set; }

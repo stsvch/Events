@@ -1,11 +1,6 @@
 ﻿using Events.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Events.Infrastructure.Persistence.Configurations
 {
@@ -21,11 +16,6 @@ namespace Events.Infrastructure.Persistence.Configurations
 
             builder.Property(img => img.UploadedAt)
                    .IsRequired();
-
-            builder.HasOne<Event>()
-                   .WithMany(e => e.Images)
-                   .HasForeignKey(img => img.EventId)
-                   .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

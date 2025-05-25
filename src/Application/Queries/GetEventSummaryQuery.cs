@@ -1,12 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Events.Application.Common;
+using Events.Application.DTOs;
+using MediatR;
+
 
 namespace Events.Application.Queries
 {
-    internal class GetEventSummaryQuery
+    public class GetEventSummaryQuery : IRequest<EventDto>, IHasId
     {
+        public Guid Id { get; }
+        public GetEventSummaryQuery(Guid id) => Id = id;
     }
 }

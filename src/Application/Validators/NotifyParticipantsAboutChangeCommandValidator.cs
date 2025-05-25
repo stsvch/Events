@@ -12,12 +12,10 @@ namespace Events.Application.Validators
     {
         public NotifyParticipantsAboutChangeCommandValidator()
         {
-            RuleFor(x => x.EventId)
-                .NotEmpty().WithMessage("EventId is required.");
+            Include(new HasEventIdValidator<NotifyParticipantsAboutChangeCommand>());
 
             RuleFor(x => x.Message)
-                .NotEmpty().WithMessage("Message is required.")
-                .MaximumLength(2000);
+                .NotEmpty().WithMessage("Message is required.");
         }
     }
 }

@@ -12,30 +12,23 @@ namespace Events.Application.Validators
     {
         public UpdateEventCommandValidator()
         {
-            RuleFor(x => x.Id)
-                .NotEmpty().WithMessage("Event Id is required.");
+            Include(new HasIdValidator<UpdateEventCommand>());
 
             RuleFor(x => x.Title)
                 .NotEmpty().WithMessage("Title is required.")
-                .MaximumLength(200);
-
-            RuleFor(x => x.Description)
-                .NotEmpty().WithMessage("Description is required.")
-                .MaximumLength(2000);
+                .MaximumLength(200).WithMessage("Title must be at most 200 characters.");
 
             RuleFor(x => x.Date)
-                .GreaterThan(DateTimeOffset.UtcNow)
-                .WithMessage("Event date must be in the future.");
+                .GreaterThan(DateTimeOffset.Now).WithMessage("Date must be in the future.");
 
             RuleFor(x => x.Venue)
-                .NotEmpty().WithMessage("Venue is required.")
-                .MaximumLength(300);
+                .NotEmpty().WithMessage("Venue is required.");
 
             RuleFor(x => x.CategoryId)
                 .NotEmpty().WithMessage("CategoryId is required.");
 
             RuleFor(x => x.Capacity)
-                .GreaterThan(0).WithMessage("Capacity must be at least 1.");
+                .GreaterThan(0).WithMessage("Capacity must be greater than zero.");
         }
     }
 }

@@ -13,8 +13,6 @@ namespace Events.Application.Interfaces
     {
         Task<PagedResultDto<EventDto>> GetAllEventsAsync(GetAllEventsQuery query);
         Task<PagedResultDto<EventDto>> SearchEventsAsync(SearchEventsQuery query);
-        Task<EventDetailDto> GetEventByIdAsync(GetEventByIdQuery query);
-        Task<EventDetailDto> GetEventByTitleAsync(GetEventByTitleQuery query);
         Task<Guid> CreateEventAsync(CreateEventCommand command);
         Task UpdateEventAsync(UpdateEventCommand command);
         Task DeleteEventAsync(DeleteEventCommand command);

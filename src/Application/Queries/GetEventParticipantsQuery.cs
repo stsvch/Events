@@ -1,4 +1,5 @@
-﻿using Events.Application.DTOs;
+﻿using Events.Application.Common;
+using Events.Application.DTOs;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Events.Application.Queries
 {
-    public class GetEventParticipantsQuery : IRequest<IEnumerable<ParticipantDto>>
+    public class GetEventParticipantsQuery : IRequest<IEnumerable<ParticipantDto>>, IHasEventId
     {
         public Guid EventId { get; set; }
     }

@@ -6,7 +6,10 @@ using System.Threading.Tasks;
 
 namespace Events.Infrastructure.Settings
 {
-    internal class CloudinarySettings
+    public class CloudinarySettings
     {
+        public string CloudName { get; set; }
+        public string ApiKey { get; set; }
+        public string ApiSecret { get; set; }
     }
 }

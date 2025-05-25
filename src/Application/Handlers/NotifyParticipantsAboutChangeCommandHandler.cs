@@ -11,37 +11,57 @@ using System.Threading.Tasks;
 
 namespace Events.Application.Handlers
 {
-    public class NotifyParticipantsAboutChangeCommandHandler: IRequestHandler<NotifyParticipantsAboutChangeCommand, Unit>
+    public class NotifyParticipantsAboutChangeCommandHandler
+    : IRequestHandler<NotifyParticipantsAboutChangeCommand, Unit>
     {
-        private readonly IEventRepository _events;
-        private readonly INotificationService _mailer;
+        private readonly IEventRepository _eventRepo;
+        private readonly INotificationService _notifier;
 
         public NotifyParticipantsAboutChangeCommandHandler(
-            IEventRepository events,
-            INotificationService mailer)
+            IEventRepository eventRepo,
+            INotificationService notifier)
         {
-            _events = events;
-            _mailer = mailer;
+            _eventRepo = eventRepo;
+            _notifier = notifier;
         }
 
         public async Task<Unit> Handle(
-            NotifyParticipantsAboutChangeCommand cmd,
-            CancellationToken ct)
+            NotifyParticipantsAboutChangeCommand command,
+            CancellationToken cancellationToken)
         {
-            // 1) Загрузить событие с деталями
-            var ev = await _events.GetByIdWithDetailsAsync(cmd.EventId, ct)
-                     ?? throw new EntityNotFoundException(cmd.EventId);
+            var evt = await _eventRepo.GetByIdWithDetailsAsync(command.EventId, cancellationToken);
+            if (evt == null)
+            {
+                throw new EntityNotFoundException(command.EventId);
+            }
 
-            // 2) Разослать всем участникам
-            var tasks = ev.Participants
-                .Select(ep => ep.Participant.Email.Value)
-                .Distinct()
-                .Select(email => _mailer.SendEmailAsync(
-                    email,
-                    $"Изменения в событии «{ev.Title}»",
-                    cmd.Message));
+            if (!evt.Participants.Any())
+            {
+                return Unit.Value;
+            }
 
-            await Task.WhenAll(tasks);
+            string subject = $"Update on event “{evt.Title}”";
+            string body = $@"
+            <p>Hello,</p>
+            <p>The event <strong>{evt.Title}</strong> has been updated:</p>
+            <p>{command.Message}</p>
+            <p>Please review the changes in your dashboard.</p>
+            <hr/>
+            <p>Best regards,<br/>Events App Team</p>
+        ";
+
+            foreach (var ep in evt.Participants)
+            {
+                var email = ep.Participant.Email.Value;
+                try
+                {
+                    await _notifier.SendEmailAsync(email, subject, body, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+
             return Unit.Value;
         }
     }

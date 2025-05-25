@@ -2,17 +2,10 @@
 using Microsoft.Extensions.Options;
 using MailKit.Net.Smtp;
 using MimeKit;
+using Events.Infrastructure.Settings;
 
 namespace Events.Infrastructure.Services.Notifications
 {
-    public class SmtpSettings
-    {
-        public string Host { get; set; }
-        public int Port { get; set; }
-        public string Username { get; set; }
-        public string Password { get; set; }
-        public bool UseSsl { get; set; }
-    }
 
     public class SmtpNotificationService : INotificationService
     {

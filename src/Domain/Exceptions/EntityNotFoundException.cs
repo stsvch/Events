@@ -10,5 +10,7 @@ namespace Events.Domain.Exceptions
     {
         public EntityNotFoundException(Guid id)
             : base($"Entity with Id = '{id}' was not found.") { }
+
+        public EntityNotFoundException(): base($"Entity was not found.") { }
     }
 }

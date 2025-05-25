@@ -12,11 +12,9 @@ namespace Events.Application.Validators
     {
         public UnregisterParticipantCommandValidator()
         {
-            RuleFor(x => x.EventId)
-                .NotEmpty().WithMessage("EventId is required.");
-
-            RuleFor(x => x.ParticipantId)
-                .NotEmpty().WithMessage("ParticipantId is required.");
+            Include(new HasEventIdValidator<UnregisterParticipantCommand>());
+            Include(new HasParticipantIdValidator<UnregisterParticipantCommand>());
         }
     }
+
 }

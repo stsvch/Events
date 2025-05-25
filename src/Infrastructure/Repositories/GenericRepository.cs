@@ -3,11 +3,7 @@ using Events.Domain.Repositories;
 using Events.Domain.Specifications;
 using Events.Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Events.Infrastructure.Repositories
 {
@@ -23,7 +19,6 @@ namespace Events.Infrastructure.Repositories
 
         public virtual async Task<IEnumerable<T>> ListAsync(ISpecification<T> spec, CancellationToken ct = default)
         {
-            // Применяем фильтры и Includes (если есть) из спецификации
             var query = SpecificationEvaluator.GetQuery(_context.Set<T>().AsQueryable(), spec);
             return await query.ToListAsync(ct);
         }
@@ -48,7 +43,6 @@ namespace Events.Infrastructure.Repositories
             await _context.SaveChangesAsync(ct);
         }
 
-        // По желанию: метод без спецификации
         public async Task<IEnumerable<T>> ListAllAsync(CancellationToken ct = default)
             => await _context.Set<T>().ToListAsync(ct);
     }

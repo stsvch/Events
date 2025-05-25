@@ -63,6 +63,9 @@ namespace Events.Domain.Entities
                                   DateTimeOffset date, string venue,
                                   Guid categoryId, int capacity)
         {
+            if (capacity < _participants.Count)
+                throw new InvariantViolationException("The capacity cannot be less than the current number of participants");
+
             Title = title;
             Description = description;
             Date = date;

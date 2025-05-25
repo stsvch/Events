@@ -8,12 +8,5 @@ using System.Threading.Tasks;
 
 namespace Events.Application.Validators
 {
-    public class GetEventParticipantsQueryValidator : AbstractValidator<GetEventParticipantsQuery>
-    {
-        public GetEventParticipantsQueryValidator()
-        {
-            RuleFor(x => x.EventId)
-                .NotEmpty().WithMessage("Event Id is required.");
-        }
-    }
+    public class GetEventParticipantsQueryValidator : HasEventIdValidator<GetEventParticipantsQuery> { }
 }
