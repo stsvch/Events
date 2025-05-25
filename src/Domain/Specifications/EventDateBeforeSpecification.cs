@@ -1,0 +1,18 @@
+﻿using Events.Domain.Entities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Linq.Expressions;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace Events.Domain.Specifications
+{
+    public class EventDateBeforeSpecification : Specification<Event>
+    {
+        private readonly DateTimeOffset _end;
+        public EventDateBeforeSpecification(DateTimeOffset end) => _end = end;
+        public override Expression<Func<Event, bool>> Criteria
+            => evt => evt.Date <= _end;
+    }
+}

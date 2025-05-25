@@ -9,6 +9,7 @@ obj/
 *.sln.docstates
 # Папка настроек VSCode
 .vscode/
+.vs/
 
 # EF Миграции (если не хотите хранить в репо)
 # src/Infrastructure/Migrations/
