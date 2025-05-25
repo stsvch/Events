@@ -9,6 +9,6 @@ namespace Events.Application.Interfaces
 {
     public interface INotificationService
     {
-        Task NotifyParticipantsAsync(NotifyParticipantsAboutChangeCommand command);
+        Task SendEmailAsync(string to, string subject, string htmlBody, CancellationToken ct = default);
     }
 }

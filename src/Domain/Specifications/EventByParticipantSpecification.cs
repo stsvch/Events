@@ -18,6 +18,6 @@ namespace Events.Domain.Specifications
         }
 
         public override Expression<Func<Event, bool>> Criteria
-            => evt => evt.Participants.Any(p => p.Id == _participantId);
+            => evt => evt.Participants.Any(ep => ep.ParticipantId == _participantId);
     }
 }

@@ -8,16 +8,11 @@ using System.Threading.Tasks;
 
 namespace Events.Domain.Specifications
 {
-    public class ParticipantByEventSpecification : Specification<Participant>
+    public class ParticipantByEmailSpecification : Specification<Participant>
     {
-        private readonly Guid _eventId;
-
-        public ParticipantByEventSpecification(Guid eventId)
-        {
-            _eventId = eventId;
-        }
-
+        private readonly string _email;
+        public ParticipantByEmailSpecification(string email) => _email = email;
         public override Expression<Func<Participant, bool>> Criteria
-            => p => p.Participations.Any(ep => ep.EventId == _eventId);
+            => p => p.Email.Value.Equals(_email, StringComparison.OrdinalIgnoreCase);
     }
 }

@@ -22,6 +22,7 @@ namespace Events.Application.Handlers
                 throw new EntityNotFoundException(command.EventId);
 
             evt.RemoveParticipant(command.ParticipantId);
+            await _eventRepo.UpdateAsync(evt, cancellationToken);
             return Unit.Value;
         }
     }

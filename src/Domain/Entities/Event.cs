@@ -14,8 +14,8 @@ namespace Events.Domain.Entities
         public Guid CategoryId { get; private set; }
         public int Capacity { get; private set; }
 
-        private readonly List<Participant> _participants = new();
-        public IReadOnlyCollection<Participant> Participants => _participants.AsReadOnly();
+        private readonly List<EventParticipant> _participants = new();
+        public IReadOnlyCollection<EventParticipant> Participants => _participants.AsReadOnly();
 
         private readonly List<EventImage> _images = new();
         public IReadOnlyCollection<EventImage> Images => _images.AsReadOnly();
@@ -40,21 +40,19 @@ namespace Events.Domain.Entities
             Capacity = capacity;
         }
 
-        public void AddParticipant(Participant participant)
+        public void AddParticipant(Guid participantId)
         {
-            if (participant == null)
-                throw new ArgumentNullException(nameof(participant));
             if (_participants.Count >= Capacity)
                 throw new InvariantViolationException("Event is full.");
-            if (_participants.Exists(p => p.Email == participant.Email))
-                throw new InvariantViolationException("Participant with this email is already registered.");
+            if (_participants.Any(ep => ep.ParticipantId == participantId))
+                throw new InvariantViolationException("Participant already registered.");
 
-            _participants.Add(participant);
+            _participants.Add(new EventParticipant(Id, participantId));
         }
 
         public void RemoveParticipant(Guid participantId)
         {
-            var existing = _participants.Find(p => p.Id == participantId);
+            var existing = _participants.FirstOrDefault(ep => ep.ParticipantId == participantId);
             if (existing == null)
                 throw new EntityNotFoundException(participantId);
 

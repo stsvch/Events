@@ -22,6 +22,8 @@ namespace Events.Application.Handlers
                 throw new EntityNotFoundException(command.EventId);
 
             existing.AddImage(command.Url);
+            await _repo.UpdateAsync(existing, cancellationToken);
+
             return Unit.Value;
         }
     }

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Security.Principal;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Events.Domain.Repositories
@@ -17,5 +18,7 @@ namespace Events.Domain.Repositories
             CancellationToken cancellationToken = default);
         Task AddAsync(T entity, CancellationToken cancellationToken = default);
         Task DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+        Task UpdateAsync(T entity, CancellationToken cancellationToken = default);
+
     }
 }

@@ -45,7 +45,6 @@ namespace Events.Application.Mappings
 
             CreateMap<RegisterParticipantCommand, Participant>()
                 .ConstructUsing(cmd => new Participant(
-                    cmd.EventId,
                     new PersonName(
                         cmd.FullName.Contains(" ") ? cmd.FullName.Substring(0, cmd.FullName.IndexOf(' ')) : cmd.FullName,
                         cmd.FullName.Contains(" ") ? cmd.FullName.Substring(cmd.FullName.IndexOf(' ') + 1) : string.Empty

@@ -35,6 +35,7 @@ namespace Events.Application.Handlers
                 spec,
                 query.PageNumber,
                 query.PageSize,
+                query.IncludeDetails,
                 cancellationToken);
 
             return new PagedResultDto<EventDto>

@@ -20,8 +20,6 @@ namespace Events.Application.Validators
                 .Must(uri => Uri.IsWellFormedUriString(uri, UriKind.Absolute))
                 .WithMessage("Image URL must be a valid absolute URI.");
 
-            RuleFor(x => x.Caption)
-                .MaximumLength(500);
         }
     }
 }

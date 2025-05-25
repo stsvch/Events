@@ -31,7 +31,7 @@ namespace Events.Application.Handlers
                 command.CategoryId,
                 command.Capacity);
 
-            // нужно посмотреть сохр изм 
+            await _repo.UpdateAsync(existing, cancellationToken);
 
             return Unit.Value;
         }
