@@ -19,17 +19,22 @@ builder.Services.AddScoped<IImageStorageService>(sp =>
     )
 );
 
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RegisteredUser", policy =>
+        policy.RequireAuthenticatedUser());
+
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireRole("Admin"));
+});
+
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Events API", Version = "v1" });
-});
-
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Events API", Version = "v1" }));
 builder.Services.AddCors(opts =>
-    opts.AddDefaultPolicy(policy =>
-        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod())
-);
+    opts.AddDefaultPolicy(p =>
+        p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
 
 var app = builder.Build();
 

@@ -12,7 +12,7 @@ namespace Events.WebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Policy = "RegisteredUser")]
     public class ParticipantsController : ControllerBase
     {
         private readonly IMediator _mediator;
@@ -21,9 +21,8 @@ namespace Events.WebApi.Controllers
         {
             _mediator = mediator;
         }
-        // GET: api/participants?eventId=...
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<ActionResult<IEnumerable<ParticipantDto>>> GetParticipants([FromQuery] Guid? eventId)
         {
             if (eventId.HasValue)
@@ -32,12 +31,10 @@ namespace Events.WebApi.Controllers
                 return Ok(participants);
             }
 
-            // Для получения всех участников используем новый запрос GetAllParticipantsQuery
             var allParticipants = await _mediator.Send(new GetAllParticipantsQuery());
             return Ok(allParticipants);
         }
 
-        // POST: api/participants/register
         [HttpPost("register")]
         public async Task<IActionResult> RegisterParticipant([FromBody] RegisterParticipantRequest request)
         {
@@ -57,7 +54,6 @@ namespace Events.WebApi.Controllers
             return Ok(new { message = "You have been registered for the event." });
         }
 
-        // DELETE: api/participants/{participantId}?eventId=...
         [HttpDelete("{participantId}")]
         public async Task<IActionResult> UnregisterParticipant(Guid participantId, [FromQuery] Guid eventId)
         {

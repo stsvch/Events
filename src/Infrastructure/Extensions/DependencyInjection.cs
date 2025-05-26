@@ -84,6 +84,8 @@ namespace Events.Infrastructure.Extensions
 
             services.AddAuthorization();
 
+            services.AddScoped<IAuthService, AuthService>();
+
             services.AddScoped<IJwtTokenService, JwtTokenService>();
 
             services.AddScoped<IEventRepository, EventRepository>();

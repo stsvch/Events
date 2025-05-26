@@ -22,7 +22,6 @@ namespace Events.WebApi.Controllers
             _imageService = imageService;
         }
 
-        // GET: api/events?pageNumber=1&pageSize=10&startDate=&endDate=&venue=&categoryId=
         [HttpGet]
         [AllowAnonymous]
         public async Task<ActionResult<PagedResultDto<EventDto>>> GetEvents(
@@ -58,7 +57,6 @@ namespace Events.WebApi.Controllers
             return Ok(result);
         }
 
-        // GET: api/events/{id}
         [HttpGet("{id}")]
         [AllowAnonymous]
         public async Task<ActionResult<EventDetailDto>> GetEventDetails(Guid id)
@@ -68,9 +66,8 @@ namespace Events.WebApi.Controllers
             return eventDetail != null ? Ok(eventDetail) : NotFound();
         }
 
-        // POST: api/events
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> CreateEvent([FromBody] CreateEventRequest request)
         {
             var command = new CreateEventCommand
@@ -86,7 +83,6 @@ namespace Events.WebApi.Controllers
             return CreatedAtAction(nameof(GetEventDetails), new { id = newEventId });
         }
 
-        // GET api/events/{id}/summary
         [HttpGet("{id}/summary")]
         [AllowAnonymous]
         public async Task<ActionResult<EventDto>> GetEventSummary(Guid id)
@@ -97,9 +93,8 @@ namespace Events.WebApi.Controllers
         }
 
 
-        // PUT: api/events/{id}
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> UpdateEvent(Guid id, [FromBody] UpdateEventRequest request)
         {
             if (id != request.Id)
@@ -126,9 +121,8 @@ namespace Events.WebApi.Controllers
         }
 
 
-        // DELETE: api/events/{id}
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> DeleteEvent(Guid id)
         {
             var command = new DeleteEventCommand { Id = id };
@@ -136,9 +130,8 @@ namespace Events.WebApi.Controllers
             return NoContent();
         }
 
-        // POST: api/events/{id}/images
         [HttpPost("{id}/images")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> UploadEventImage(Guid id, [FromForm] UploadEventImageRequest request)
         {
             string imageUrl;
