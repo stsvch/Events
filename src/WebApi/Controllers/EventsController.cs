@@ -86,6 +86,17 @@ namespace Events.WebApi.Controllers
             return CreatedAtAction(nameof(GetEventDetails), new { id = newEventId });
         }
 
+        // GET api/events/{id}/summary
+        [HttpGet("{id}/summary")]
+        [AllowAnonymous]
+        public async Task<ActionResult<EventDto>> GetEventSummary(Guid id)
+        {
+            var query = new GetEventSummaryQuery(id);
+            var summary = await _mediator.Send(query);
+            return summary != null ? Ok(summary) : NotFound();
+        }
+
+
         // PUT: api/events/{id}
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin")]
@@ -105,8 +116,15 @@ namespace Events.WebApi.Controllers
                 Capacity = request.Capacity
             };
             await _mediator.Send(command);
+            await _mediator.Send(new NotifyParticipantsAboutChangeCommand
+            {
+                EventId = id,
+                EventTitle = request.Title,
+                Message = "Event data was updated."
+            });
             return NoContent();
         }
+
 
         // DELETE: api/events/{id}
         [HttpDelete("{id}")]

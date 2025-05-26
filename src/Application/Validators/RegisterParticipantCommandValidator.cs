@@ -1,10 +1,6 @@
 ﻿using Events.Application.Commands;
 using FluentValidation;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Events.Application.Validators
 {
@@ -14,8 +10,13 @@ namespace Events.Application.Validators
         {
             Include(new HasEventIdValidator<RegisterParticipantCommand>());
 
+            RuleFor(x => x.UserId)
+                .NotEmpty().WithMessage("UserId is required (must be authenticated).");
+
             RuleFor(x => x.FullName)
-                .NotEmpty().WithMessage("FullName is required.");
+                .NotEmpty().WithMessage("FullName is required.")
+                .Must(name => name.Split(' ', 2).Length == 2)
+                .WithMessage("Enter your first and last name separated by a space.");
 
             RuleFor(x => x.Email)
                 .NotEmpty().WithMessage("Email is required.")
@@ -23,9 +24,6 @@ namespace Events.Application.Validators
 
             RuleFor(x => x.DateOfBirth)
                 .LessThan(DateTimeOffset.Now).WithMessage("DateOfBirth must be in the past.");
-            RuleFor(x => x.FullName)
-                .Must(name => name.Split(' ', 2).Length == 2 && !string.IsNullOrWhiteSpace(name.Split(' ', 2)[1]))
-                .WithMessage("Enter your first and last name separated by a space.");
         }
     }
 }

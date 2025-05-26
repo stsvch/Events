@@ -1,10 +1,5 @@
 ﻿using Events.Application.Commands;
 using FluentValidation;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Events.Application.Validators
 {
@@ -14,7 +9,9 @@ namespace Events.Application.Validators
         {
             Include(new HasEventIdValidator<UnregisterParticipantCommand>());
             Include(new HasParticipantIdValidator<UnregisterParticipantCommand>());
+
+            RuleFor(x => x.UserId)
+                .NotEmpty().WithMessage("UserId is required (must be authenticated).");
         }
     }
-
 }

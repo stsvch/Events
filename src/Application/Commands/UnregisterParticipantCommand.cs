@@ -1,10 +1,6 @@
 ﻿using Events.Application.Common;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Events.Application.Commands
 {
@@ -12,5 +8,7 @@ namespace Events.Application.Commands
     {
         public Guid EventId { get; set; }
         public Guid ParticipantId { get; set; }
+
+        public string UserId { get; set; } = null!;
     }
 }

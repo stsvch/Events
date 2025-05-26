@@ -1,13 +1,13 @@
-﻿using Events.Application.DTOs;
-using Events.Domain.Exceptions;
-using Events.Infrastructure.Identity;
-using Events.WebApi.DTOs.Requests;
-using FluentValidation;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
+﻿using System;
 using System.Net;
 using System.Text.Json;
+using System.Threading.Tasks;
+using Events.Application.DTOs;
+using Events.Domain.Exceptions;
+using FluentValidation;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Events.WebApi.Middleware
 {
@@ -45,13 +45,29 @@ namespace Events.WebApi.Middleware
                     => (HttpStatusCode.NotFound,
                         new ErrorDto { Code = "NotFound", Message = notFoundEx.Message }),
 
+                ForbiddenException forbiddenEx
+                    => (HttpStatusCode.Forbidden,
+                        new ErrorDto { Code = "Forbidden", Message = forbiddenEx.Message }),
+
                 ValidationException valEx
                     => (HttpStatusCode.UnprocessableEntity,
                         new ErrorDto
                         {
                             Code = "ValidationError",
-                            Message = string.Join("; ", valEx.Errors)
+                            Message = string.Join("; ", valEx.Errors.Select(e => e.ErrorMessage))
                         }),
+
+                SecurityTokenExpiredException expiredEx
+                    => (HttpStatusCode.Unauthorized,
+                        new ErrorDto { Code = "TokenExpired", Message = expiredEx.Message }),
+
+                SecurityTokenException tokenEx
+                    => (HttpStatusCode.Unauthorized,
+                        new ErrorDto { Code = "InvalidToken", Message = tokenEx.Message }),
+
+                UnauthorizedAccessException uaEx
+                    => (HttpStatusCode.Unauthorized,
+                        new ErrorDto { Code = "Unauthorized", Message = uaEx.Message }),
 
                 _ => (HttpStatusCode.InternalServerError,
                         new ErrorDto
@@ -66,5 +82,4 @@ namespace Events.WebApi.Middleware
             return context.Response.WriteAsync(payload);
         }
     }
-
 }

@@ -2,27 +2,42 @@
 using Events.Domain.Exceptions;
 using Events.Domain.Repositories;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Events.Application.Handlers
 {
-    public class UnregisterParticipantCommandHandler : IRequestHandler<UnregisterParticipantCommand, Unit>
+    public class UnregisterParticipantCommandHandler
+        : IRequestHandler<UnregisterParticipantCommand, Unit>
     {
         private readonly IEventRepository _eventRepo;
-        public UnregisterParticipantCommandHandler(IEventRepository eventRepo) => _eventRepo = eventRepo;
+        private readonly IParticipantRepository _partRepo;
 
-        public async Task<Unit> Handle(UnregisterParticipantCommand command, CancellationToken cancellationToken)
+        public UnregisterParticipantCommandHandler(
+            IEventRepository eventRepo,
+            IParticipantRepository partRepo)
         {
-            var evt = await _eventRepo.GetByIdAsync(command.EventId, cancellationToken);
-            if (evt == null)
-                throw new EntityNotFoundException(command.EventId);
+            _eventRepo = eventRepo;
+            _partRepo = partRepo;
+        }
 
-            evt.RemoveParticipant(command.ParticipantId);
+        public async Task<Unit> Handle(
+            UnregisterParticipantCommand command,
+            CancellationToken cancellationToken)
+        {
+            var evt = await _eventRepo
+                .GetByIdAsync(command.EventId, cancellationToken)
+                ?? throw new EntityNotFoundException(command.EventId);
+
+            var participant = await _partRepo
+                .GetByIdAsync(command.ParticipantId, cancellationToken)
+                ?? throw new EntityNotFoundException(command.ParticipantId);
+
+            if (participant.UserId != command.UserId)
+                throw new ForbiddenException("You can only cancel your own registration.");
+
+            evt.RemoveParticipant(participant.Id);
             await _eventRepo.UpdateAsync(evt, cancellationToken);
+
             return Unit.Value;
         }
     }

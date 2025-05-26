@@ -6,11 +6,13 @@ using Events.WebApi.DTOs.Requests;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace Events.WebApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class ParticipantsController : ControllerBase
     {
         private readonly IMediator _mediator;
@@ -19,7 +21,6 @@ namespace Events.WebApi.Controllers
         {
             _mediator = mediator;
         }
-
         // GET: api/participants?eventId=...
         [HttpGet]
         [Authorize(Roles = "Admin")]
@@ -38,9 +39,13 @@ namespace Events.WebApi.Controllers
 
         // POST: api/participants/register
         [HttpPost("register")]
-        [AllowAnonymous]
         public async Task<IActionResult> RegisterParticipant([FromBody] RegisterParticipantRequest request)
         {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
+          ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (userId == null)
+                return Unauthorized();
+
             var command = new RegisterParticipantCommand
             {
                 EventId = request.EventId,
@@ -54,7 +59,6 @@ namespace Events.WebApi.Controllers
 
         // DELETE: api/participants/{participantId}?eventId=...
         [HttpDelete("{participantId}")]
-        [Authorize]
         public async Task<IActionResult> UnregisterParticipant(Guid participantId, [FromQuery] Guid eventId)
         {
             var command = new UnregisterParticipantCommand

@@ -44,14 +44,21 @@ namespace Events.Application.Mappings
                     DateTimeOffset.UtcNow));
 
             CreateMap<RegisterParticipantCommand, Participant>()
-                .ConstructUsing(cmd => new Participant(
-                    new PersonName(
-                        cmd.FullName.Contains(" ") ? cmd.FullName.Substring(0, cmd.FullName.IndexOf(' ')) : cmd.FullName,
-                        cmd.FullName.Contains(" ") ? cmd.FullName.Substring(cmd.FullName.IndexOf(' ') + 1) : string.Empty
-                    ),
-                    new EmailAddress(cmd.Email),
-                    cmd.DateOfBirth 
-                ));
+                            .ConstructUsing(cmd =>
+                                new Participant(
+                                    new PersonName(
+                                        cmd.FullName.Contains(" ")
+                                            ? cmd.FullName.Substring(0, cmd.FullName.IndexOf(' '))
+                                            : cmd.FullName,
+                                        cmd.FullName.Contains(" ")
+                                            ? cmd.FullName.Substring(cmd.FullName.IndexOf(' ') + 1)
+                                            : string.Empty
+                                    ),
+                                    new EmailAddress(cmd.Email),
+                                    cmd.DateOfBirth,
+                                    cmd.UserId   
+                                )
+                            );
         }
     }
 }

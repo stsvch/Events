@@ -5,15 +5,11 @@ using Events.Domain.Repositories;
 using Events.Domain.Specifications;
 using Events.Domain.ValueObjects;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Events.Application.Handlers
 {
-    public class RegisterParticipantCommandHandler: IRequestHandler<RegisterParticipantCommand, Unit>
+    public class RegisterParticipantCommandHandler
+        : IRequestHandler<RegisterParticipantCommand, Unit>
     {
         private readonly IEventRepository _eventRepo;
         private readonly IParticipantRepository _partRepo;
@@ -30,34 +26,50 @@ namespace Events.Application.Handlers
             RegisterParticipantCommand command,
             CancellationToken cancellationToken)
         {
-            var evt = await _eventRepo.GetByIdAsync(command.EventId, cancellationToken)
-                      ?? throw new EntityNotFoundException(command.EventId);
+            var evt = await _eventRepo
+                .GetByIdAsync(command.EventId, cancellationToken)
+                ?? throw new EntityNotFoundException(command.EventId);
+
+            foreach (var ep in evt.Participants)
+            {
+                var p = await _partRepo
+                    .GetByIdAsync(ep.ParticipantId, cancellationToken);
+                if (p != null && p.UserId == command.UserId)
+                    throw new ForbiddenException("You are already registered for this event.");
+            }
 
             var parts = command.FullName.Split(' ', 2);
             var nameVo = new PersonName(parts[0], parts.ElementAtOrDefault(1) ?? "");
             var emailVo = new EmailAddress(command.Email);
 
+            Participant participant;
             var existing = (await _partRepo
                 .ListAsync(new ParticipantByEmailSpecification(emailVo.Value), cancellationToken))
                 .FirstOrDefault();
 
-            Participant participant;
             if (existing != null)
             {
                 participant = existing;
+                if (participant.UserId != command.UserId)
+                {
+                    participant.UserId = command.UserId;
+                    await _partRepo.UpdateAsync(participant, cancellationToken);
+                }
             }
             else
             {
-                participant = new Participant(nameVo, emailVo, command.DateOfBirth);
+                participant = new Participant(
+                    nameVo,
+                    emailVo,
+                    command.DateOfBirth,
+                    command.UserId);
                 await _partRepo.AddAsync(participant, cancellationToken);
             }
 
             evt.AddParticipant(participant.Id);
-
             await _eventRepo.UpdateAsync(evt, cancellationToken);
 
             return Unit.Value;
         }
-
     }
 }

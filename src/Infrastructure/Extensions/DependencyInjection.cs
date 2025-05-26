@@ -1,4 +1,5 @@
-﻿using Duende.IdentityServer.EntityFramework.Options;
+﻿using System.Text;
+using Duende.IdentityServer.EntityFramework.Options;
 using Events.Application.Interfaces;
 using Events.Domain.Repositories;
 using Events.Infrastructure.Identity;
@@ -9,13 +10,13 @@ using Events.Infrastructure.Services.Caching;
 using Events.Infrastructure.Services.Images;
 using Events.Infrastructure.Services.Notifications;
 using Events.Infrastructure.Settings;
-using Microsoft.AspNetCore.ApiAuthorization.IdentityServer;
-using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Events.Infrastructure.Extensions
 {
@@ -39,8 +40,8 @@ namespace Events.Infrastructure.Extensions
                 options.Password.RequireUppercase = true;
                 options.Password.RequireNonAlphanumeric = false;
             })
-                .AddEntityFrameworkStores<IdentityDbContext>()
-                .AddDefaultTokenProviders();
+            .AddEntityFrameworkStores<IdentityDbContext>()
+            .AddDefaultTokenProviders();
 
             services.AddIdentityServer()
                 .AddApiAuthorization<ApplicationUser, IdentityDbContext>()
@@ -50,8 +51,38 @@ namespace Events.Infrastructure.Extensions
                         builder.UseSqlServer(config.GetConnectionString("IdentityConnection"));
                 });
 
-            services.AddAuthentication()
-                .AddIdentityServerJwt();
+            services.Configure<JwtSettings>(config.GetSection("JwtSettings"));
+            var jwtSettings = config.GetSection("JwtSettings").Get<JwtSettings>()!;
+
+            var key = Encoding.UTF8.GetBytes(jwtSettings.Key);
+            var issuer = jwtSettings.Issuer;
+            var audience = jwtSettings.Audience;
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = true;
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidIssuer = issuer,
+
+                    ValidateAudience = true,
+                    ValidAudience = audience,
+
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(key),
+
+                    ValidateLifetime = true
+                };
+            });
+
+            services.AddAuthorization();
 
             services.AddScoped<IJwtTokenService, JwtTokenService>();
 
@@ -68,7 +99,6 @@ namespace Events.Infrastructure.Extensions
                 new CachedImageService(
                     sp.GetRequiredService<CloudinaryImageService>(),
                     sp.GetRequiredService<IDistributedCache>()));
-
 
             return services;
         }

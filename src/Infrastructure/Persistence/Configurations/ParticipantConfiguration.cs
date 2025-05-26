@@ -1,5 +1,6 @@
 ﻿using Events.Domain.Entities;
 using Events.Domain.ValueObjects;
+using Events.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -40,6 +41,10 @@ namespace Events.Infrastructure.Persistence.Configurations
                    .WithOne(ep => ep.Participant)
                    .HasForeignKey(ep => ep.ParticipantId)
                    .OnDelete(DeleteBehavior.Cascade);
+            builder.HasOne<ApplicationUser>()
+                .WithMany()       
+                .HasForeignKey(p => p.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
