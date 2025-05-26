@@ -13,7 +13,10 @@ namespace Events.Application.Extensions
 
             services.AddAutoMapper(typeof(DependencyInjection).Assembly);
 
-            services.AddMediatR(typeof(DependencyInjection).Assembly);
+            services.AddMediatR(cfg =>
+            {
+                cfg.RegisterServicesFromAssembly(typeof(DependencyInjection).Assembly);
+            });
 
             services.AddValidatorsFromAssembly(typeof(DependencyInjection).Assembly);
             return services;
