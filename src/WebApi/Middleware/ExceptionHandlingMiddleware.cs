@@ -1,67 +1,69 @@
-﻿using Events.Infrastructure.Identity;
+﻿using Events.Application.DTOs;
+using Events.Domain.Exceptions;
+using Events.Infrastructure.Identity;
 using Events.WebApi.DTOs.Requests;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Net;
+using System.Text.Json;
 
 namespace Events.WebApi.Middleware
 {
-    [ApiController]
-    [Route("api/[controller]")]
-    public class AuthController : ControllerBase
+    public class ExceptionHandlingMiddleware
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly IJwtTokenService _jwtService;  
+        private readonly RequestDelegate _next;
+        private readonly ILogger<ExceptionHandlingMiddleware> _logger;
 
-        public AuthController(UserManager<ApplicationUser> userManager,
-                              SignInManager<ApplicationUser> signInManager,
-                              IJwtTokenService jwtService)
+        public ExceptionHandlingMiddleware(RequestDelegate next, ILogger<ExceptionHandlingMiddleware> logger)
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
-            _jwtService = jwtService;
+            _next = next;
+            _logger = logger;
         }
 
-        [HttpPost("register")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Register([FromBody] RegisterUserRequest request)
+        public async Task InvokeAsync(HttpContext context)
         {
-            var user = new ApplicationUser { UserName = request.Username, Email = request.Email };
-            var result = await _userManager.CreateAsync(user, request.Password);
-            if (!result.Succeeded)
+            try
             {
-                return BadRequest(result.Errors);
+                await _next(context);
             }
-            var tokens = await _jwtService.GenerateTokensAsync(user);
-            return Ok(tokens); 
-        }
-
-        [HttpPost("login")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Login([FromBody] LoginRequest request)
-        {
-            var user = await _userManager.FindByNameAsync(request.Username);
-            if (user == null) return Unauthorized("Invalid credentials");
-
-            var passwordCheck = await _signInManager.CheckPasswordSignInAsync(user, request.Password, lockoutOnFailure: false);
-            if (!passwordCheck.Succeeded)
-                return Unauthorized("Invalid credentials");
-
-            var tokens = await _jwtService.GenerateTokensAsync(user);
-            return Ok(tokens);
-        }
-
-        [HttpPost("refresh")]
-        [AllowAnonymous]
-        public async Task<IActionResult> Refresh([FromBody] RefreshRequest request)
-        {
-            var result = await _jwtService.RefreshTokensAsync(request.AccessToken, request.RefreshToken);
-            if (!result.Succeeded)
+            catch (Exception ex)
             {
-                return Unauthorized("Invalid or expired refresh token");
+                _logger.LogError(ex, "Unhandled exception");
+                await HandleExceptionAsync(context, ex);
             }
-            return Ok(new { accessToken = result.AccessToken, refreshToken = result.RefreshToken });
+        }
+
+        private static Task HandleExceptionAsync(HttpContext context, Exception exception)
+        {
+            context.Response.ContentType = "application/json";
+
+            var (statusCode, errorDto) = exception switch
+            {
+                EntityNotFoundException notFoundEx
+                    => (HttpStatusCode.NotFound,
+                        new ErrorDto { Code = "NotFound", Message = notFoundEx.Message }),
+
+                ValidationException valEx
+                    => (HttpStatusCode.UnprocessableEntity,
+                        new ErrorDto
+                        {
+                            Code = "ValidationError",
+                            Message = string.Join("; ", valEx.Errors)
+                        }),
+
+                _ => (HttpStatusCode.InternalServerError,
+                        new ErrorDto
+                        {
+                            Code = "ServerError",
+                            Message = "An unexpected error occurred."
+                        })
+            };
+
+            context.Response.StatusCode = (int)statusCode;
+            var payload = JsonSerializer.Serialize(errorDto);
+            return context.Response.WriteAsync(payload);
         }
     }
 

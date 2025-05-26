@@ -10,7 +10,6 @@ namespace Events.Domain.ValueObjects
 {
     public class PersonName : IEquatable<PersonName>
     {
-
         public string FirstName { get; }
         public string LastName { get; }
 

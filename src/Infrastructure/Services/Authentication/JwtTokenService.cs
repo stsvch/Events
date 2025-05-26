@@ -44,8 +44,9 @@ namespace Events.Infrastructure.Services.Authentication
 
         public async Task<JwtAuthenticationResult> GenerateTokensAsync(string userId)
         {
-            var user = await _userManager.FindByIdAsync(userId)
-                       ?? return JwtAuthenticationResult.Failure();
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return JwtAuthenticationResult.Failure();
 
             // Собираем claims
             var claims = new List<Claim>
@@ -67,8 +68,8 @@ namespace Events.Infrastructure.Services.Authentication
             string accessToken = new JwtSecurityTokenHandler().WriteToken(jwt);
 
             // Генерируем refresh token
-            string refreshValue = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
-            var refreshEntity = new RefreshToken
+            var refreshValue = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
+            var refreshEntity = new Events.Infrastructure.Identity.RefreshToken
             {
                 Token = refreshValue,
                 UserId = user.Id,

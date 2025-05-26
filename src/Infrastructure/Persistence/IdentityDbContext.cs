@@ -11,7 +11,7 @@ namespace Events.Infrastructure.Persistence
     public class IdentityDbContext :
         ApiAuthorizationDbContext<ApplicationUser>
     {
-        public DbSet<RefreshToken> RefreshTokens { get; set; } = default!;
+        public DbSet<Identity.RefreshToken> RefreshTokens { get; set; } = default!;
         public IdentityDbContext(
             DbContextOptions<IdentityDbContext> options,
             IOptions<OperationalStoreOptions> operationalStoreOptions)

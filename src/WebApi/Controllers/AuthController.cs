@@ -1,9 +1,7 @@
-﻿using Events.Application.Interfaces;
-using Events.Infrastructure.Identity;
+﻿using Events.Application.DTOs;
+using Events.Application.Interfaces;
 using Events.WebApi.DTOs.Requests;
-using Events.WebApi.DTOs.Responses;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Events.WebApi.Controllers
@@ -12,54 +10,45 @@ namespace Events.WebApi.Controllers
     [Route("api/[controller]")]
     public class AuthController : ControllerBase
     {
-        private readonly IJwtTokenService _jwtSvc;
-        private readonly SignInManager<ApplicationUser> _signInMgr;
-        private readonly UserManager<ApplicationUser> _userMgr;
+        private readonly IAuthService _auth;
 
-        public AuthController(
-            IJwtTokenService jwtSvc,
-            SignInManager<ApplicationUser> signInMgr,
-            UserManager<ApplicationUser> userMgr)
+        public AuthController(IAuthService auth)
+            => _auth = auth;
+
+        [HttpPost("register"), AllowAnonymous]
+        public async Task<IActionResult> Register([FromBody] RegisterUserRequest req)
         {
-            _jwtSvc = jwtSvc;
-            _signInMgr = signInMgr;
-            _userMgr = userMgr;
+            var res = await _auth.RegisterAsync(req.Username, req.Email, req.Password);
+            if (!res.Succeeded) return BadRequest("Registration failed");
+            return Ok(new TokenDto
+            {
+                AccessToken = res.AccessToken,
+                RefreshToken = res.RefreshToken
+            });
         }
 
         [HttpPost("login"), AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginRequest req)
         {
-            var user = await _userMgr.FindByNameAsync(req.Username);
-            if (user == null) return Unauthorized();
-
-            var res = await _signInMgr.CheckPasswordSignInAsync(user, req.Password, false);
-            if (!res.Succeeded) return Unauthorized();
-
-            // Вызываем application-слой, получаем JwtAuthenticationResult
-            var authResult = await _jwtSvc.GenerateTokensAsync(user.Id);
-            if (!authResult.Succeeded) return StatusCode(500);
-
-            // Мапим в HTTP DTO
-            var response = new TokenResponse
+            var res = await _auth.LoginAsync(req.Username, req.Password);
+            if (!res.Succeeded) return Unauthorized("Invalid credentials");
+            return Ok(new TokenDto
             {
-                AccessToken = authResult.AccessToken,
-                RefreshToken = authResult.RefreshToken
-            };
-            return Ok(response);
+                AccessToken = res.AccessToken,
+                RefreshToken = res.RefreshToken
+            });
         }
 
         [HttpPost("refresh"), AllowAnonymous]
         public async Task<IActionResult> Refresh([FromBody] RefreshRequest req)
         {
-            var authResult = await _jwtSvc.RefreshTokensAsync(req.RefreshToken);
-            if (!authResult.Succeeded) return Unauthorized();
-
-            var response = new TokenResponse
+            var res = await _auth.RefreshAsync(req.RefreshToken);
+            if (!res.Succeeded) return Unauthorized("Invalid or expired refresh token");
+            return Ok(new TokenDto
             {
-                AccessToken = authResult.AccessToken,
-                RefreshToken = authResult.RefreshToken
-            };
-            return Ok(response);
+                AccessToken = res.AccessToken,
+                RefreshToken = res.RefreshToken
+            });
         }
     }
 }

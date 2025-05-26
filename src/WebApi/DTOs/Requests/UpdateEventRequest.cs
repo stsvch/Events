@@ -1,6 +1,7 @@
 ﻿namespace Events.WebApi.DTOs.Requests
 {
-    public class UpdateEventRequest
+    public class UpdateEventRequest : CreateEventRequest
     {
+        public Guid Id { get; set; }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using Events.Application.Commands;
+using Events.Application.DTOs;
 using Events.Application.Queries;
 using Events.WebApi.DTOs.Requests;
 using MediatR;
@@ -13,12 +14,10 @@ namespace Events.WebApi.Controllers
     public class ParticipantsController : ControllerBase
     {
         private readonly IMediator _mediator;
-        private readonly IMapper _mapper;
 
-        public ParticipantsController(IMediator mediator, IMapper mapper)
+        public ParticipantsController(IMediator mediator)
         {
             _mediator = mediator;
-            _mapper = mapper;
         }
 
         // GET: api/participants?eventId=...
@@ -26,27 +25,29 @@ namespace Events.WebApi.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<ActionResult<IEnumerable<ParticipantDto>>> GetParticipants([FromQuery] Guid? eventId)
         {
-            IEnumerable<ParticipantDto> participants;
             if (eventId.HasValue)
             {
-                // Получить участников конкретного события
-                var query = new GetEventParticipantsQuery(eventId.Value);
-                participants = await _mediator.Send(query);
+                var participants = await _mediator.Send(new GetEventParticipantsQuery { EventId = eventId.Value });
+                return Ok(participants);
             }
-            else
-            {
-                // Получить всех участников системы
-                participants = await _mediator.Send(new GetAllParticipantsQuery());
-            }
-            return Ok(participants);
+
+            // Для получения всех участников используем новый запрос GetAllParticipantsQuery
+            var allParticipants = await _mediator.Send(new GetAllParticipantsQuery());
+            return Ok(allParticipants);
         }
 
         // POST: api/participants/register
         [HttpPost("register")]
-        [AllowAnonymous] // предполагаем, что регистрация на событие доступна без токена (для внешних пользователей)
+        [AllowAnonymous]
         public async Task<IActionResult> RegisterParticipant([FromBody] RegisterParticipantRequest request)
         {
-            var command = _mapper.Map<RegisterParticipantCommand>(request);
+            var command = new RegisterParticipantCommand
+            {
+                EventId = request.EventId,
+                FullName = request.FullName,
+                Email = request.Email,
+                DateOfBirth = request.DateOfBirth
+            };
             await _mediator.Send(command);
             return Ok(new { message = "You have been registered for the event." });
         }
@@ -56,11 +57,13 @@ namespace Events.WebApi.Controllers
         [Authorize]
         public async Task<IActionResult> UnregisterParticipant(Guid participantId, [FromQuery] Guid eventId)
         {
-            // Удаление участника из события (отмена регистрации)
-            var command = new UnregisterParticipantCommand { ParticipantId = participantId, EventId = eventId };
+            var command = new UnregisterParticipantCommand
+            {
+                ParticipantId = participantId,
+                EventId = eventId
+            };
             await _mediator.Send(command);
             return NoContent();
         }
     }
-
 }

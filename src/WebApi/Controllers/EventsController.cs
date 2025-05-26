@@ -1,6 +1,8 @@
-﻿using AutoMapper;
+﻿using Events.Application.Commands;
+using Events.Application.DTOs;
+using Events.Application.Interfaces;
+using Events.Application.Queries;
 using Events.WebApi.DTOs.Requests;
-using Events.WebApi.DTOs.Responses;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -12,20 +14,46 @@ namespace Events.WebApi.Controllers
     public class EventsController : ControllerBase
     {
         private readonly IMediator _mediator;
-        private readonly IMapper _mapper;
+        private readonly IImageStorageService _imageService;
 
-        public EventsController(IMediator mediator, IMapper mapper)
+        public EventsController(IMediator mediator, IImageStorageService imageService)
         {
             _mediator = mediator;
-            _mapper = mapper;
+            _imageService = imageService;
         }
 
-        // GET: api/events?pageNumber=1&pageSize=10
+        // GET: api/events?pageNumber=1&pageSize=10&startDate=&endDate=&venue=&categoryId=
         [HttpGet]
-        [AllowAnonymous]  // доступно без авторизации
-        public async Task<ActionResult<PagedResultDto<EventDto>>> GetEvents([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
+        [AllowAnonymous]
+        public async Task<ActionResult<PagedResultDto<EventDto>>> GetEvents(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] DateTimeOffset? startDate = null,
+            [FromQuery] DateTimeOffset? endDate = null,
+            [FromQuery] string? venue = null,
+            [FromQuery] Guid? categoryId = null)
         {
-            var query = new GetAllEventsQuery { PageNumber = pageNumber, PageSize = pageSize, IncludeDetails = false };
+            if (startDate.HasValue || endDate.HasValue || !string.IsNullOrWhiteSpace(venue) || categoryId.HasValue)
+            {
+                var searchQuery = new SearchEventsQuery
+                {
+                    StartDate = startDate,
+                    EndDate = endDate,
+                    Venue = venue,
+                    CategoryId = categoryId,
+                    PageNumber = pageNumber,
+                    PageSize = pageSize
+                };
+                var filteredResult = await _mediator.Send(searchQuery);
+                return Ok(filteredResult);
+            }
+
+            var query = new GetAllEventsQuery
+            {
+                PageNumber = pageNumber,
+                PageSize = pageSize,
+                IncludeDetails = false
+            };
             var result = await _mediator.Send(query);
             return Ok(result);
         }
@@ -42,14 +70,20 @@ namespace Events.WebApi.Controllers
 
         // POST: api/events
         [HttpPost]
-        [Authorize(Roles = "Admin")]  // только авторизованный пользователь (админ) может создавать события
-        public async Task<ActionResult<EventDetailDto>> CreateEvent([FromBody] CreateEventRequest request)
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> CreateEvent([FromBody] CreateEventRequest request)
         {
-            // Валидация FluentValidation запускается автоматически (через pipeline) перед обработкой команды
-            var command = _mapper.Map<CreateEventCommand>(request);
-            var createdEvent = await _mediator.Send(command);
-            // createdEvent можно вернуть как DTO. Предположим, команда возвращает EventDetailDto.
-            return CreatedAtAction(nameof(GetEventDetails), new { id = createdEvent.Id }, createdEvent);
+            var command = new CreateEventCommand
+            {
+                Title = request.Title,
+                Date = request.Date,
+                Venue = request.Venue,
+                CategoryId = request.CategoryId,
+                Description = request.Description,
+                Capacity = request.Capacity
+            };
+            var newEventId = await _mediator.Send(command);
+            return CreatedAtAction(nameof(GetEventDetails), new { id = newEventId });
         }
 
         // PUT: api/events/{id}
@@ -60,7 +94,16 @@ namespace Events.WebApi.Controllers
             if (id != request.Id)
                 return BadRequest("Mismatched Event ID");
 
-            var command = _mapper.Map<UpdateEventCommand>(request);
+            var command = new UpdateEventCommand
+            {
+                Id = request.Id,
+                Title = request.Title,
+                Date = request.Date,
+                Venue = request.Venue,
+                CategoryId = request.CategoryId,
+                Description = request.Description,
+                Capacity = request.Capacity
+            };
             await _mediator.Send(command);
             return NoContent();
         }
@@ -70,9 +113,38 @@ namespace Events.WebApi.Controllers
         [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteEvent(Guid id)
         {
-            await _mediator.Send(new DeleteEventCommand { EventId = id });
+            var command = new DeleteEventCommand { Id = id };
+            await _mediator.Send(command);
             return NoContent();
         }
-    }
 
+        // POST: api/events/{id}/images
+        [HttpPost("{id}/images")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> UploadEventImage(Guid id, [FromForm] UploadEventImageRequest request)
+        {
+            string imageUrl;
+            if (request.File != null)
+            {
+                using var stream = request.File.OpenReadStream();
+                imageUrl = await _imageService.UploadAsync(stream, request.File.FileName);
+            }
+            else if (!string.IsNullOrWhiteSpace(request.Url))
+            {
+                imageUrl = request.Url;
+            }
+            else
+            {
+                return BadRequest("Either file or Url must be provided.");
+            }
+
+            var command = new AddEventImageCommand
+            {
+                EventId = id,
+                Url = imageUrl
+            };
+            await _mediator.Send(command);
+            return Ok(new { Url = imageUrl });
+        }
+    }
 }

@@ -3,11 +3,6 @@ using Events.Application.Interfaces;
 using Events.Domain.Exceptions;
 using Events.Domain.Repositories;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Events.Application.Handlers
 {
@@ -47,7 +42,7 @@ namespace Events.Application.Handlers
             <p>{command.Message}</p>
             <p>Please review the changes in your dashboard.</p>
             <hr/>
-            <p>Best regards,<br/>Events App Team</p>
+            <p>Best regards,<br/>Events App</p>
         ";
 
             foreach (var ep in evt.Participants)
