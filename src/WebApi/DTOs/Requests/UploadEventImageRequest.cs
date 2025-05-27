@@ -1,8 +1,13 @@
-﻿namespace Events.WebApi.DTOs.Requests
+﻿using Microsoft.AspNetCore.Mvc;
+
+namespace Events.WebApi.DTOs.Requests
 {
     public class UploadEventImageRequest
     {
-        public IFormFile? File { get; set; }
-        public string? Url { get; set; }
+        [FromForm(Name = "file")]
+        public IFormFile File { get; set; }
+
+        [FromForm(Name = "url")]
+        public string Url { get; set; }
     }
 }

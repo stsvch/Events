@@ -6,12 +6,19 @@ using System.Threading.Tasks;
 
 namespace Events.Application.DTOs
 {
-    public class EventDetailDto : EventDto
+    public class EventDetailDto
     {
-        public string Description { get; set; }
+        public Guid Id { get; set; }
+        public string Title { get; set; } = null!;
+        public string Description { get; set; } = null!;
+        public DateTimeOffset Date { get; set; }
+        public string Venue { get; set; } = null!;
+        public Guid CategoryId { get; set; }
         public int Capacity { get; set; }
-        public IEnumerable<EventImageDto> Images { get; set; }
-        public int RegisteredCount { get; set; }
+        public int ParticipantCount { get; set; }
+        public List<ParticipantDto> Participants { get; set; } = new();
+
+        public List<EventImageDto> Images { get; set; } = new();
     }
 
 }

@@ -130,32 +130,33 @@ namespace Events.WebApi.Controllers
             return NoContent();
         }
 
+        [RequestSizeLimit(100_000_000)]
         [HttpPost("{id}/images")]
         [Authorize(Policy = "AdminOnly")]
         public async Task<IActionResult> UploadEventImage(Guid id, [FromForm] UploadEventImageRequest request)
         {
+            if (request.File == null && string.IsNullOrWhiteSpace(request.Url))
+                return BadRequest("Either file or Url must be provided.");
+
             string imageUrl;
             if (request.File != null)
             {
                 using var stream = request.File.OpenReadStream();
                 imageUrl = await _imageService.UploadAsync(stream, request.File.FileName);
             }
-            else if (!string.IsNullOrWhiteSpace(request.Url))
+            else
             {
                 imageUrl = request.Url;
             }
-            else
-            {
-                return BadRequest("Either file or Url must be provided.");
-            }
 
-            var command = new AddEventImageCommand
+            await _mediator.Send(new AddEventImageCommand
             {
                 EventId = id,
                 Url = imageUrl
-            };
-            await _mediator.Send(command);
-            return Ok(new { Url = imageUrl });
+            });
+
+            return Ok(new { url = imageUrl });
         }
+
     }
 }

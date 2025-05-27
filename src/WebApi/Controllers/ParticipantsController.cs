@@ -36,23 +36,22 @@ namespace Events.WebApi.Controllers
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> RegisterParticipant([FromBody] RegisterParticipantRequest request)
+        public async Task<IActionResult> RegisterParticipant(
+            [FromBody] RegisterParticipantRequest request)
         {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier)
-          ?? User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null)
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
                 return Unauthorized();
 
-            var command = new RegisterParticipantCommand
+            await _mediator.Send(new RegisterParticipantCommand
             {
                 EventId = request.EventId,
-                FullName = request.FullName,
-                Email = request.Email,
-                DateOfBirth = request.DateOfBirth
-            };
-            await _mediator.Send(command);
+                UserId = userId
+            });
+
             return Ok(new { message = "You have been registered for the event." });
         }
+
 
         [HttpDelete("{participantId}")]
         public async Task<IActionResult> UnregisterParticipant(Guid participantId, [FromQuery] Guid eventId)

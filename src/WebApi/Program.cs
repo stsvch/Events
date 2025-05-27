@@ -3,6 +3,7 @@ using Events.Application.Interfaces;
 using Events.Infrastructure.Extensions;
 using Events.Infrastructure.Services.Caching;
 using Events.Infrastructure.Services.Images;
+using Events.WebApi;
 using Events.WebApi.Middleware;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.OpenApi.Models;
@@ -32,9 +33,15 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "Events API", Version = "v1" }));
+
 builder.Services.AddCors(opts =>
-    opts.AddDefaultPolicy(p =>
-        p.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod()));
+  opts.AddDefaultPolicy(p =>
+    p.WithOrigins("http://localhost:3000")  // адрес вашего React-клиента
+     .AllowAnyHeader()
+     .AllowAnyMethod()
+     .AllowCredentials()                     // <— включаем Allow-Credentials
+  ));
+
 
 var app = builder.Build();
 
@@ -53,4 +60,5 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
 app.Run();

@@ -8,8 +8,7 @@ using MediatR;
 
 namespace Events.Application.Handlers
 {
-    public class RegisterParticipantCommandHandler
-        : IRequestHandler<RegisterParticipantCommand, Unit>
+    public class RegisterParticipantCommandHandler : IRequestHandler<RegisterParticipantCommand, Unit>
     {
         private readonly IEventRepository _eventRepo;
         private readonly IParticipantRepository _partRepo;
@@ -27,49 +26,26 @@ namespace Events.Application.Handlers
             CancellationToken cancellationToken)
         {
             var evt = await _eventRepo
-                .GetByIdAsync(command.EventId, cancellationToken)
+                .GetByIdWithDetailsAsync(command.EventId, cancellationToken)
                 ?? throw new EntityNotFoundException(command.EventId);
 
-            foreach (var ep in evt.Participants)
-            {
-                var p = await _partRepo
-                    .GetByIdAsync(ep.ParticipantId, cancellationToken);
-                if (p != null && p.UserId == command.UserId)
-                    throw new ForbiddenException("You are already registered for this event.");
-            }
+            var participants = await _partRepo
+                .ListAsync(
+                   new ParticipantByUserIdSpecification(command.UserId),
+                   cancellationToken);
 
-            var parts = command.FullName.Split(' ', 2);
-            var nameVo = new PersonName(parts[0], parts.ElementAtOrDefault(1) ?? "");
-            var emailVo = new EmailAddress(command.Email);
+            var participant = participants.SingleOrDefault()
+                ?? throw new EntityNotFoundException();
 
-            Participant participant;
-            var existing = (await _partRepo
-                .ListAsync(new ParticipantByEmailSpecification(emailVo.Value), cancellationToken))
-                .FirstOrDefault();
-
-            if (existing != null)
-            {
-                participant = existing;
-                if (participant.UserId != command.UserId)
-                {
-                    participant.UserId = command.UserId;
-                    await _partRepo.UpdateAsync(participant, cancellationToken);
-                }
-            }
-            else
-            {
-                participant = new Participant(
-                    nameVo,
-                    emailVo,
-                    command.DateOfBirth,
-                    command.UserId);
-                await _partRepo.AddAsync(participant, cancellationToken);
-            }
+            if (evt.Participants.Any(ep => ep.ParticipantId == participant.Id))
+                throw new ForbiddenException("You are already registered for this event.");
 
             evt.AddParticipant(participant.Id);
             await _eventRepo.UpdateAsync(evt, cancellationToken);
 
             return Unit.Value;
         }
+
     }
+
 }

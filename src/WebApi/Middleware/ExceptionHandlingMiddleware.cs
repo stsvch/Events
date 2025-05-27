@@ -43,11 +43,19 @@ namespace Events.WebApi.Middleware
             {
                 EntityNotFoundException notFoundEx
                     => (HttpStatusCode.NotFound,
-                        new ErrorDto { Code = "NotFound", Message = notFoundEx.Message }),
+                        new ErrorDto 
+                        { 
+                            Code = "NotFound",
+                            Message = notFoundEx.Message
+                        }),
 
                 ForbiddenException forbiddenEx
                     => (HttpStatusCode.Forbidden,
-                        new ErrorDto { Code = "Forbidden", Message = forbiddenEx.Message }),
+                        new ErrorDto 
+                        {
+                            Code = "Forbidden",
+                            Message = forbiddenEx.Message 
+                        }),
 
                 ValidationException valEx
                     => (HttpStatusCode.UnprocessableEntity,
@@ -59,17 +67,29 @@ namespace Events.WebApi.Middleware
 
                 SecurityTokenExpiredException expiredEx
                     => (HttpStatusCode.Unauthorized,
-                        new ErrorDto { Code = "TokenExpired", Message = expiredEx.Message }),
+                        new ErrorDto 
+                        { 
+                            Code = "TokenExpired",
+                            Message = expiredEx.Message
+                        }),
 
                 SecurityTokenException tokenEx
                     => (HttpStatusCode.Unauthorized,
-                        new ErrorDto { Code = "InvalidToken", Message = tokenEx.Message }),
+                        new ErrorDto
+                        { 
+                            Code = "InvalidToken",
+                            Message = tokenEx.Message
+                        }),
 
                 UnauthorizedAccessException uaEx
                     => (HttpStatusCode.Unauthorized,
-                        new ErrorDto { Code = "Unauthorized", Message = uaEx.Message }),
+                        new ErrorDto
+                        {
+                            Code = "Unauthorized", 
+                            Message = uaEx.Message 
+                        }),
 
-                _ => (HttpStatusCode.InternalServerError,
+                    _ => (HttpStatusCode.InternalServerError,
                         new ErrorDto
                         {
                             Code = "ServerError",

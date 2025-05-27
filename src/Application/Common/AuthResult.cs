@@ -11,18 +11,26 @@ namespace Events.Application.Common
         public bool Succeeded { get; }
         public string AccessToken { get; }
         public string RefreshToken { get; }
+        public IEnumerable<string> Errors { get; }
+        public string? UserId { get; init; }
 
-        private AuthResult(bool ok, string access, string refresh)
+        private AuthResult(bool succeeded, string accessToken, string refreshToken, IEnumerable<string> errors, string userId)
         {
-            Succeeded = ok;
-            AccessToken = access;
-            RefreshToken = refresh;
+            Succeeded = succeeded;
+            AccessToken = accessToken;
+            RefreshToken = refreshToken;
+            Errors = errors;
+            UserId = userId;
         }
 
-        public static AuthResult Success(string access, string refresh)
-            => new AuthResult(true, access, refresh);
+        public static AuthResult Success(string accessToken, string refreshToken, string userId)
+            => new AuthResult(true, accessToken, refreshToken, Array.Empty<string>(), userId);
+
+        public static AuthResult Failure(params string[] errors)
+            => new AuthResult(false, string.Empty, string.Empty, errors ?? new[] { "Authentication failed." }, string.Empty);
+
 
         public static AuthResult Failure()
-            => new AuthResult(false, "", "");
+            => Failure(new[] { "Authentication failed." });
     }
 }

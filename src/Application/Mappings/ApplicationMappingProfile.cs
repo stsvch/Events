@@ -13,10 +13,11 @@ namespace Events.Application.Mappings
         public ApplicationMappingProfile()
         {
             CreateMap<Event, EventDto>();
+
             CreateMap<Event, EventDetailDto>()
                 .ForMember(d => d.Description, o => o.MapFrom(s => s.Description))
-                .ForMember(d => d.Images, o => o.MapFrom(s => s.Images))
-                .ForMember(d => d.RegisteredCount, o => o.MapFrom(s => s.Participants.Count));
+                .ForMember(d => d.ParticipantCount, o => o.MapFrom(s => s.Participants.Count))
+                .ForMember(d => d.Images, o => o.MapFrom(s => s.Images));
 
             CreateMap<EventImage, EventImageDto>();
 
@@ -42,23 +43,12 @@ namespace Events.Application.Mappings
                     cmd.EventId,
                     cmd.Url,
                     DateTimeOffset.UtcNow));
-
-            CreateMap<RegisterParticipantCommand, Participant>()
-                            .ConstructUsing(cmd =>
-                                new Participant(
-                                    new PersonName(
-                                        cmd.FullName.Contains(" ")
-                                            ? cmd.FullName.Substring(0, cmd.FullName.IndexOf(' '))
-                                            : cmd.FullName,
-                                        cmd.FullName.Contains(" ")
-                                            ? cmd.FullName.Substring(cmd.FullName.IndexOf(' ') + 1)
-                                            : string.Empty
-                                    ),
-                                    new EmailAddress(cmd.Email),
-                                    cmd.DateOfBirth,
-                                    cmd.UserId   
-                                )
-                            );
+            CreateMap<CreateParticipantProfileCommand, Participant>()
+                .ConstructUsing(cmd => new Participant(
+                    new PersonName(cmd.FirstName, cmd.LastName),
+                    new EmailAddress(cmd.Email),
+                    cmd.DateOfBirth,
+                    cmd.UserId));
         }
     }
 }

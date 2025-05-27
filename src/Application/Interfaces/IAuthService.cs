@@ -12,5 +12,7 @@ namespace Events.Application.Interfaces
         Task<AuthResult> RegisterAsync(string username, string email, string password);
         Task<AuthResult> LoginAsync(string username, string password);
         Task<AuthResult> RefreshAsync(string refreshToken);
+        Task<LogoutResult> LogoutAsync(string refreshToken);
     }
+
 }

@@ -88,6 +88,8 @@ namespace Events.Infrastructure.Extensions
 
             services.AddScoped<IJwtTokenService, JwtTokenService>();
 
+            services.AddScoped<ICategoryRepository, CategoryRepository>();
+
             services.AddScoped<IEventRepository, EventRepository>();
             services.AddScoped<IParticipantRepository, ParticipantRepository>();
             services.AddScoped<IEventParticipantRepository, EventParticipantRepository>();
@@ -96,6 +98,10 @@ namespace Events.Infrastructure.Extensions
             services.Configure<CloudinarySettings>(config.GetSection("CloudinarySettings"));
 
             services.AddTransient<INotificationService, SmtpNotificationService>();
+
+            // Добавьте, например:
+            services.AddDistributedMemoryCache();
+
             services.AddTransient<CloudinaryImageService>();
             services.AddTransient<IImageStorageService>(sp =>
                 new CachedImageService(

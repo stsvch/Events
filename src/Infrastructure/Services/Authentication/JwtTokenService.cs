@@ -1,5 +1,4 @@
-﻿using Duende.IdentityServer.Models;
-using Events.Application.Extensions;
+﻿using Events.Application.Extensions;
 using Events.Application.Interfaces;
 using Events.Infrastructure.Identity;
 using Events.Infrastructure.Persistence;
@@ -44,11 +43,12 @@ namespace Events.Infrastructure.Services.Authentication
 
         public async Task<JwtAuthenticationResult> GenerateTokensAsync(string userId)
         {
+            // 1. Получаем пользователя
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
                 return JwtAuthenticationResult.Failure();
 
-            // Собираем claims
+            // 2. Собираем claims для access-токена
             var claims = new List<Claim>
             {
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id),
@@ -57,7 +57,7 @@ namespace Events.Infrastructure.Services.Authentication
             var roles = await _userManager.GetRolesAsync(user);
             claims.AddRange(roles.Select(r => new Claim(ClaimTypes.Role, r)));
 
-            // Генерируем access token
+            // 3. Генерация access-токена
             var creds = new SigningCredentials(_signingKey, SecurityAlgorithms.HmacSha256);
             var jwt = new JwtSecurityToken(
                 issuer: _config["JwtSettings:Issuer"],
@@ -65,11 +65,16 @@ namespace Events.Infrastructure.Services.Authentication
                 claims: claims,
                 expires: DateTime.UtcNow.AddMinutes(_accessMinutes),
                 signingCredentials: creds);
-            string accessToken = new JwtSecurityTokenHandler().WriteToken(jwt);
+            var accessToken = new JwtSecurityTokenHandler().WriteToken(jwt);
 
-            // Генерируем refresh token
+            // 4. Пакетно удаляем просроченные refresh-токены одним SQL-запросом
+            await _db.RefreshTokens
+                     .Where(rt => rt.UserId == userId && rt.ExpiresAt <= DateTime.UtcNow)
+                     .ExecuteDeleteAsync();
+
+            // 5. Генерируем новый refresh-токен и сохраняем
             var refreshValue = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64));
-            var refreshEntity = new Events.Infrastructure.Identity.RefreshToken
+            var refreshEntity = new RefreshToken
             {
                 Token = refreshValue,
                 UserId = user.Id,
@@ -77,9 +82,6 @@ namespace Events.Infrastructure.Services.Authentication
                 ExpiresAt = DateTime.UtcNow.AddDays(_refreshDays)
             };
 
-            // Удаляем устаревшие и сохраняем новый
-            _db.RefreshTokens.RemoveRange(
-                _db.RefreshTokens.Where(rt => rt.UserId == user.Id && rt.ExpiresAt <= DateTime.UtcNow));
             await _db.RefreshTokens.AddAsync(refreshEntity);
             await _db.SaveChangesAsync();
 
@@ -88,18 +90,22 @@ namespace Events.Infrastructure.Services.Authentication
 
         public async Task<JwtAuthenticationResult> RefreshTokensAsync(string refreshToken)
         {
+            // 1. Сначала находим существующую запись, чтобы получить userId
             var stored = await _db.RefreshTokens
-                .FirstOrDefaultAsync(rt => rt.Token == refreshToken);
+                                  .AsNoTracking()
+                                  .SingleOrDefaultAsync(rt => rt.Token == refreshToken);
             if (stored == null || stored.ExpiresAt < DateTime.UtcNow)
                 return JwtAuthenticationResult.Failure();
 
-            var user = await _userManager.FindByIdAsync(stored.UserId);
-            if (user == null) return JwtAuthenticationResult.Failure();
+            var userId = stored.UserId;
 
-            _db.RefreshTokens.Remove(stored);
-            await _db.SaveChangesAsync();
+            // 2. Удаляем этот refresh-токен пакетно (одной командой)
+            await _db.RefreshTokens
+                     .Where(rt => rt.Token == refreshToken)
+                     .ExecuteDeleteAsync();
 
-            return await GenerateTokensAsync(user.Id);
+            // 3. Генерируем новый комплект токенов
+            return await GenerateTokensAsync(userId);
         }
     }
 }

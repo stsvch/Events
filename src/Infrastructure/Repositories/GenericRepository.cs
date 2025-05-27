@@ -39,9 +39,18 @@ namespace Events.Infrastructure.Repositories
 
         public virtual async Task UpdateAsync(T entity, CancellationToken ct = default)
         {
-            _context.Set<T>().Update(entity);
+            var entry = _context.Entry(entity);
+            if (entry.State == EntityState.Detached)
+            {
+                _context.Set<T>().Attach(entity);
+                entry = _context.Entry(entity);
+            }
+
+            entry.State = EntityState.Modified;
+
             await _context.SaveChangesAsync(ct);
         }
+
 
         public async Task<IEnumerable<T>> ListAllAsync(CancellationToken ct = default)
             => await _context.Set<T>().ToListAsync(ct);
