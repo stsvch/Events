@@ -24,9 +24,7 @@ namespace Events.Application.Handlers
             var evt = await _eventRepo.GetByIdWithDetailsAsync(command.EventId, cancellationToken)
                 ?? throw new EntityNotFoundException(command.EventId);
 
-            var participants = await _partRepo.ListAsync(new ParticipantByUserIdSpecification(command.UserId),cancellationToken);
-
-            var participant = participants.SingleOrDefault()?? throw new EntityNotFoundException();
+            var participant = await _partRepo.GetBySpecAsync(new ParticipantByUserIdSpecification(command.UserId), cancellationToken);
 
             if (evt.Participants.Any(ep => ep.ParticipantId == participant.Id))
                 throw new ForbiddenException("You are already registered for this event.");

@@ -53,17 +53,23 @@ namespace Events.WebApi.Controllers
         }
 
 
-        [HttpDelete("{participantId}")]
-        public async Task<IActionResult> UnregisterParticipant(Guid participantId, [FromQuery] Guid eventId)
+        [HttpPost("unregister")]
+        public async Task<IActionResult> UnregisterParticipant(
+            [FromBody] UnregisterParticipantRequest request)
         {
-            var command = new UnregisterParticipantCommand
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            await _mediator.Send(new UnregisterParticipantCommand
             {
-                ParticipantId = participantId,
-                EventId = eventId
-            };
-            await _mediator.Send(command);
-            return NoContent();
+                EventId = request.EventId,
+                UserId = userId
+            });
+
+            return Ok(new { message = "You have been unregistered from the event." });
         }
+
 
         [HttpGet("is-registered")]
         public async Task<ActionResult<RegistrationStatusDto>> IsRegistered([FromQuery] Guid eventId)
@@ -79,6 +85,26 @@ namespace Events.WebApi.Controllers
             });
 
             return Ok(status);
+        }
+
+        [HttpGet("{id:guid}")]
+        [AllowAnonymous]
+        public async Task<ActionResult<ParticipantDto>> GetById(Guid id)
+        {
+            var dto = await _mediator.Send(new GetParticipantByIdQuery { ParticipantId = id });
+            if (dto is null) return NotFound();
+            return Ok(dto);
+        }
+
+        [HttpGet("me")]
+        public async Task<ActionResult<ParticipantDto>> GetCurrentUser()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId)) return Unauthorized();
+
+            var dto = await _mediator.Send(new GetParticipantByUserIdQuery { UserId = userId });
+            if (dto is null) return NotFound();
+            return Ok(dto);
         }
     }
 }

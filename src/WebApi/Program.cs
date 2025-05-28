@@ -1,7 +1,6 @@
 using Events.Application.Extensions;
 using Events.Application.Interfaces;
 using Events.Infrastructure.Extensions;
-using Events.Infrastructure.Services.Caching;
 using Events.Infrastructure.Services.Images;
 using Events.WebApi;
 using Events.WebApi.Middleware;
@@ -13,12 +12,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-builder.Services.AddScoped<IImageStorageService>(sp =>
-    new CachedImageService(
-        sp.GetRequiredService<CloudinaryImageService>(),
-        sp.GetRequiredService<IDistributedCache>()
-    )
-);
 
 builder.Services.AddAuthorization(options =>
 {
@@ -36,10 +29,10 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddCors(opts =>
   opts.AddDefaultPolicy(p =>
-    p.WithOrigins("http://localhost:3000")  // адрес React-клиента
+    p.WithOrigins("http://localhost:3000") 
      .AllowAnyHeader()
      .AllowAnyMethod()
-     .AllowCredentials()                     // <— включаем Allow-Credentials
+     .AllowCredentials()                 
   ));
 
 

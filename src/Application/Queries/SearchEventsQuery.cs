@@ -1,4 +1,5 @@
 ﻿using Events.Application.DTOs;
+using Events.Domain.Common;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -17,5 +18,6 @@ namespace Events.Application.Queries
         public Guid? CategoryId { get; set; }
         public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 10;
+        public SpecificationCombineMode CombineMode { get; set; } = SpecificationCombineMode.And;
     }
 }

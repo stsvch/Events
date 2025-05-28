@@ -21,9 +21,7 @@ namespace Events.Application.Mappings
 
             CreateMap<Event, EventDetailDto>()
                 .ForMember(d => d.ParticipantCount,
-                           opt => opt.MapFrom(src => src.Participants.Count))
-                .ForMember(d => d.Images,
-                           opt => opt.MapFrom(src => src.Images));
+                           opt => opt.MapFrom(src => src.Participants.Count));
 
             CreateMap<bool, RegistrationStatusDto>()
                 .ConvertUsing(src => new RegistrationStatusDto { IsRegistered = src });
@@ -31,8 +29,12 @@ namespace Events.Application.Mappings
             CreateMap<EventImage, EventImageDto>();
 
             CreateMap<Participant, ParticipantDto>()
-                .ForMember(dest => dest.FullName, opt => opt.MapFrom(src => src.Name.ToString()))
-                .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email.Value));
+                .ForMember(dest => dest.FullName,
+                           opt => opt.MapFrom(src => src.Name.ToString()))
+                .ForMember(dest => dest.Email,
+                           opt => opt.MapFrom(src => src.Email.Value))
+                .ForMember(dest => dest.DateOfBirth,
+                           opt => opt.MapFrom(src => src.DateOfBirth));
 
             CreateMap<Category, CategoryDto>();
             CreateMap<CreateCategoryCommand, Category>()

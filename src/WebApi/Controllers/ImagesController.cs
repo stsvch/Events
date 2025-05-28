@@ -71,12 +71,8 @@ namespace Events.WebApi.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> GetAll(Guid eventId)
         {
-            var urls = await _mediator.Send(new GetEventImagesQuery
-            {
-                EventId = eventId
-            });
-
-            return Ok(urls);
+            var dtos = await _mediator.Send(new GetEventImagesQuery { EventId = eventId });
+            return Ok(dtos);
         }
 
         [HttpGet("first")]

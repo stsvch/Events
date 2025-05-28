@@ -7,6 +7,8 @@ export default function PrivateRoute({ roles = [] }) {
   const { user, accessToken } = useAuth();
   const location = useLocation();
 
+console.log('PrivateRoute: user.roles =', user?.roles);
+
   if (!accessToken) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }

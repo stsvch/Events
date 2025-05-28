@@ -76,21 +76,5 @@ namespace Events.Domain.Entities
 
         public int ParticipantCount => _participants.Count;
 
-        public void AddImage(string url)
-        {
-            if (string.IsNullOrWhiteSpace(url))
-                throw new InvariantViolationException("Image URL cannot be empty.");
-
-            _images.Add(new EventImage(Id, url, DateTimeOffset.UtcNow));
-        }
-
-        public void RemoveImage(Guid imageId)
-        {
-            var existing = _images.FirstOrDefault(i => i.Id == imageId);
-            if (existing == null)
-                throw new EntityNotFoundException(imageId);
-
-            _images.Remove(existing);
-        }
     }
 }

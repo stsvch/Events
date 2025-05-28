@@ -27,14 +27,23 @@ export default function Layout({ children }) {
   };
 
   const navItems = [
-    { text: 'Events',    path: '/events' },
-    { text: 'My Events', path: '/my-events', role: 'RegisteredUser' },
-    { text: 'Admin',     path: '/admin/events', role: 'Admin' },
+    { text: 'Events',          path: '/events' },
+    {
+      text: 'My Events',
+      path: '/my-events',
+      requiresAuth: true,
+      hideForRoles: ['Admin'],   
+    },
+    {
+      text: 'Admin',
+      path: '/admin/events',
+      role: 'Admin',          
+    },
   ];
 
   return (
     <>
-      <AppBar position="static">
+      <AppBar position="fixed">
         <Toolbar>
           <IconButton
             edge="start"
@@ -44,11 +53,9 @@ export default function Layout({ children }) {
           >
             <MenuIcon />
           </IconButton>
-
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
             EventApp
           </Typography>
-
           {accessToken ? (
             <Button color="inherit" onClick={handleLogout}>
               Logout
@@ -73,8 +80,16 @@ export default function Layout({ children }) {
           onClick={() => setDrawerOpen(false)}
         >
           <List>
-            {navItems.map(item => (
-              (!item.role || user?.roles?.includes(item.role)) && (
+            {navItems.map(item => {
+              if (item.requiresAuth && !accessToken) return null;
+              if (item.role && !user?.roles?.includes(item.role)) return null;
+              if (
+                item.hideForRoles &&
+                user?.roles?.some(r => item.hideForRoles.includes(r))
+              ) {
+                return null;
+              }
+              return (
                 <ListItem
                   button
                   key={item.text}
@@ -83,8 +98,8 @@ export default function Layout({ children }) {
                 >
                   <ListItemText primary={item.text} />
                 </ListItem>
-              )
-            ))}
+              );
+            })}
           </List>
         </Box>
       </Drawer>

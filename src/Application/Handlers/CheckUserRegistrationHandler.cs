@@ -15,6 +15,7 @@ namespace Events.Application.Handlers
         public CheckUserRegistrationHandler(IParticipantRepository repository, IMapper mapper)
         {
             _repository = repository;
+            _mapper = mapper;
         }
 
         public async Task<RegistrationStatusDto> Handle(

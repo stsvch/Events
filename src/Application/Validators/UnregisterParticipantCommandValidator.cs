@@ -8,10 +8,6 @@ namespace Events.Application.Validators
         public UnregisterParticipantCommandValidator()
         {
             Include(new HasEventIdValidator<UnregisterParticipantCommand>());
-            Include(new HasParticipantIdValidator<UnregisterParticipantCommand>());
-
-            RuleFor(x => x.UserId)
-                .NotEmpty().WithMessage("UserId is required (must be authenticated).");
         }
     }
 }

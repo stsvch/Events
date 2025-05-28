@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Events.Application.DTOs;
 using Events.Application.Queries;
+using Events.Domain.Common;
 using Events.Domain.Entities;
 using Events.Domain.Repositories;
 using Events.Domain.Specifications;
@@ -21,29 +22,47 @@ namespace Events.Application.Handlers
             _repo = repo;
             _mapper = mapper;
         }
-
         public async Task<PagedResultDto<EventDto>> Handle(SearchEventsQuery query, CancellationToken cancellationToken)
         {
-            ISpecification<Event> spec = Specification<Event>.True;
-            if (query.StartDate.HasValue)
-                spec = spec.And(new EventDateAfterSpecification(query.StartDate.Value));
-            if (query.EndDate.HasValue)
-                spec = spec.And(new EventDateBeforeSpecification(query.EndDate.Value));
-            if (!string.IsNullOrWhiteSpace(query.Venue))
-                spec = spec.And(new EventVenueSpecification(query.Venue!));
-            if (query.CategoryId.HasValue)
-                spec = spec.And(new EventCategorySpecification(query.CategoryId.Value));
-            if (!string.IsNullOrWhiteSpace(query.Title))
-                spec = spec.And(new EventTitleSpecification(query.Title));
+            List<ISpecification<Event>> specs = new();
 
-            var paged = await _repo.ListAsync
-                (
-                spec,
+            if (query.StartDate.HasValue)
+                specs.Add(new EventDateAfterSpecification(query.StartDate.Value));
+            if (query.EndDate.HasValue)
+                specs.Add(new EventDateBeforeSpecification(query.EndDate.Value));
+            if (!string.IsNullOrWhiteSpace(query.Venue))
+                specs.Add(new EventVenueSpecification(query.Venue!));
+            if (query.CategoryId.HasValue)
+                specs.Add(new EventCategorySpecification(query.CategoryId.Value));
+            if (!string.IsNullOrWhiteSpace(query.Title))
+                specs.Add(new EventTitleSpecification(query.Title));
+
+            ISpecification<Event> combinedSpec;
+
+            if (specs.Count == 0)
+            {
+                combinedSpec = Specification<Event>.True;
+            }
+            else if (query.CombineMode == SpecificationCombineMode.And)
+            {
+                combinedSpec = Specification<Event>.True;
+                foreach (var s in specs)
+                    combinedSpec = combinedSpec.And(s);
+            }
+            else 
+            {
+                combinedSpec = Specification<Event>.False;
+                foreach (var s in specs)
+                    combinedSpec = combinedSpec.Or(s);
+            }
+
+            var paged = await _repo.ListAsync(
+                combinedSpec,
                 query.PageNumber,
                 query.PageSize,
                 includeDetails: true,
                 cancellationToken
-                );
+            );
 
             return new PagedResultDto<EventDto>
             {

@@ -9,14 +9,21 @@ export function registerParticipant({ eventId }) {
   return api.post('/participants/register', { eventId });
 }
 
-export function unregisterParticipant(participantId, eventId) {
-  return api.delete(`/participants/${participantId}`, {
-    params: { eventId },
-  });
+export function unregisterParticipant(eventId) {
+  return api.post('/participants/unregister', { eventId });
 }
+
 
 export function isRegistered(eventId) {
   return api.get('/participants/is-registered', {
     params: { eventId },
   });
+}
+
+export function getParticipantById(id) {
+  return api.get(`/participants/${id}`);
+}
+
+export function getCurrentParticipant() {
+  return api.get('/participants/me');
 }

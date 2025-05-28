@@ -4,11 +4,9 @@ using MediatR;
 
 namespace Events.Application.Commands
 {
-    public class UnregisterParticipantCommand : IRequest<Unit>, IHasEventId, IHasParticipantId
+    public class UnregisterParticipantCommand : IRequest<Unit>, IHasEventId
     {
         public Guid EventId { get; set; }
-        public Guid ParticipantId { get; set; }
-
-        public string UserId { get; set; } = null!;
+        public string UserId { get; set; }
     }
 }

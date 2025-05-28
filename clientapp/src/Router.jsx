@@ -12,6 +12,7 @@ import AdminEventsPage from './pages/Events/AdminEventsPage';
 import CreateEventPage from './pages/Events/CreateEventPage';
 import EditEventPage from './pages/Events/EditEventPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
+import RegisterParticipantPage from './pages/Events/RegisterParticipantPage';
 
 export default function Router() {
   const { user } = useAuth();
@@ -19,26 +20,30 @@ export default function Router() {
   return (
     <Layout>
       <Routes>
-        {/* Public routes */}
+        {/* Public */}
         <Route path="/" element={<Navigate to="/events" replace />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/events" element={<EventsListPage />} />
         <Route path="/events/:id" element={<EventDetailPage />} />
 
-        {/* Protected user */}
-        <Route element={<PrivateRoute roles={[ 'RegisteredUser' ]} />}>  
+        {/* Любой залогиненный */}
+        <Route element={<PrivateRoute />}>
           <Route path="/my-events" element={<MyEventsPage />} />
+          <Route
+            path="/participants/register"
+            element={<RegisterParticipantPage />}
+          />
         </Route>
 
-        {/* Admin routes */}
-        <Route element={<PrivateRoute roles={[ 'Admin' ]} />}>  
+        {/* Только админ */}
+        <Route element={<PrivateRoute roles={['Admin']} />}>
           <Route path="/admin/events" element={<AdminEventsPage />} />
           <Route path="/admin/events/create" element={<CreateEventPage />} />
           <Route path="/admin/events/edit/:id" element={<EditEventPage />} />
         </Route>
 
-        {/* Unauthorized */}
+        {/* 403 */}
         <Route path="/unauthorized" element={<UnauthorizedPage />} />
 
         {/* Fallback */}

@@ -4,20 +4,24 @@ import api from './axiosInstance';
 export function getEvents({
   title,
   pageNumber = 1,
-  pageSize = 10,
+  pageSize = 4,
   startDate,
   endDate,
   venue,
-  categoryId
+  categoryId,
+  combineMode = 'And' 
 }) {
-  const params = { pageNumber, pageSize };
+  const params = { pageNumber, pageSize, combineMode };
+
   if (title)      params.title      = title;
   if (startDate)  params.startDate  = startDate;
   if (endDate)    params.endDate    = endDate;
   if (venue)      params.venue      = venue;
   if (categoryId) params.categoryId = categoryId;
+
   return api.get('/events', { params });
 }
+
 
 export function getEventById(eventId) {
   return api.get(`/events/${eventId}`);
@@ -40,27 +44,13 @@ export function createEvent(eventData, files = [], imageUrls = []) {
 }
 
 export function updateEvent(eventId, eventData) {
-  return api.put(`/events/${eventId}`, eventData);
+  return api.put(`/events/${eventId}`, { id: eventId, ...eventData });
 }
 
 export function deleteEvent(eventId) {
   return api.delete(`/events/${eventId}`);
 }
 
-export function uploadEventImage(eventId, { file, url }) {
-  const formData = new FormData();
-  if (file) {
-    formData.append('file', file);
-  } else if (url) {
-    formData.append('url', url);
-  }
-  return api.post(
-    `/events/${eventId}/images`,
-    formData,
-    { headers: { 'Content-Type': 'multipart/form-data' } }
-  );
-}
-
-export function deleteEventImage(eventId, imageId) {
-  return api.delete(`/events/${eventId}/images/${imageId}`);
+export function getMyEvents() {
+  return api.get('/events/me');
 }

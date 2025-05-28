@@ -9,8 +9,12 @@ using System.Threading.Tasks;
 
 namespace Events.Application.Queries
 {
-    public class GetEventsByParticipantQuery : IRequest<IEnumerable<EventDto>>, IHasParticipantId
+    public class GetEventsByParticipantQuery : IRequest<IEnumerable<EventDto>>
     {
-        public Guid ParticipantId { get; set; }
+        public string UserId { get; set; }
+        public GetEventsByParticipantQuery(string userId)
+        {
+            UserId = userId;
+        }
     }
 }

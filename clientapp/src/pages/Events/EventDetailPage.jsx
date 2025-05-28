@@ -1,22 +1,35 @@
+// src/pages/Events/EventDetailPage.jsx
+
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
-  Container, Box, Typography, Button,
-  CircularProgress, Alert, CardMedia,
-  List, ListItem, ListItemText
+  Container,
+  Box,
+  Typography,
+  Button,
+  CircularProgress,
+  Alert,
+  CardMedia,
+  List,
+  ListItem,
+  ListItemText,
 } from '@mui/material';
+import EventIcon from '@mui/icons-material/Event';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 import Slider from 'react-slick';
+import 'slick-carousel/slick/slick.css';
+import 'slick-carousel/slick/slick-theme.css';
 
 import { useAuth } from '../../context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getEventById, deleteEvent } from '../../api/events';
 import {
-  getEventById, deleteEvent, uploadEventImage
-} from '../../api/events';
-import {
-  getParticipants, registerParticipant,
-  unregisterParticipant, isRegistered as checkRegistration
+  getParticipants,
+  unregisterParticipant,
+  isRegistered as checkRegistration,
 } from '../../api/participants';
-import { getEventImages } from '../../api/images';
+import { getEventImages, uploadEventImage } from '../../api/images';
 
 const PLACEHOLDER_IMAGE = '/images/placeholder.png';
 
@@ -27,21 +40,21 @@ export default function EventDetailPage() {
   const isAdmin = user?.roles?.includes('Admin') ?? false;
   const queryClient = useQueryClient();
 
-  // 1) основной запрос события
+  // 1) Fetch event details
   const {
     data: event,
     isLoading: loadingEvent,
-    error: eventError
+    error: eventError,
   } = useQuery({
     queryKey: ['event', id],
     queryFn: () => getEventById(id).then(res => res.data),
   });
 
-  // 2) запрос списка картинок
+  // 2) Fetch event images
   const {
-    data: imageUrls = [],
+    data: imageList = [],
     isLoading: loadingImages,
-    error: imagesError
+    error: imagesError,
   } = useQuery({
     queryKey: ['eventImages', id],
     queryFn: () => getEventImages(id),
@@ -49,30 +62,24 @@ export default function EventDetailPage() {
     staleTime: 5 * 60_000,
   });
 
-  // 3) проверка, зарегистрирован ли текущий пользователь
+  // 3) Check current user's registration status
   const {
     data: registration,
     isLoading: loadingRegistration,
-    error: registrationError
+    error: registrationError,
   } = useQuery({
     queryKey: ['isRegistered', id],
     queryFn: () => checkRegistration(id).then(res => res.data),
     enabled: !!user && !isAdmin,
   });
 
-  const registerMutation = useMutation({
-    mutationFn: () => registerParticipant({ eventId: id }),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['isRegistered', id]);
-      queryClient.invalidateQueries(['participants', id]);
-    },
-  });
-
+  // Mutations
   const unregisterMutation = useMutation({
-    mutationFn: () => unregisterParticipant(registration.participantId, id),
+    mutationFn: () => unregisterParticipant(id),
     onSuccess: () => {
       queryClient.invalidateQueries(['isRegistered', id]);
       queryClient.invalidateQueries(['participants', id]);
+      queryClient.invalidateQueries(['event', id]);
     },
   });
 
@@ -82,48 +89,63 @@ export default function EventDetailPage() {
   });
 
   const uploadMutation = useMutation({
-    mutationFn: file => uploadEventImage(id, { file }),
+    mutationFn: file => uploadEventImage(id, file),
     onSuccess: () => {
       queryClient.invalidateQueries(['eventImages', id]);
       queryClient.invalidateQueries(['event', id]);
     },
   });
 
-  // загрузка...
-  if (loadingEvent) return (
-    <Box display="flex" justifyContent="center" mt={8}>
-      <CircularProgress />
-    </Box>
-  );
-  if (eventError) return (
-    <Container maxWidth="sm" sx={{ mt: 4 }}>
-      <Alert severity="error">Error loading event: {eventError.message}</Alert>
-    </Container>
-  );
-  if (!event) return (
-    <Box textAlign="center" mt={8}>
-      <Typography>Event not found.</Typography>
-      <Button component={Link} to="/events" sx={{ mt: 2 }}>
-        Back to events
-      </Button>
-    </Box>
-  );
+  // Show loading / error states
+  if (loadingEvent) {
+    return (
+      <Box display="flex" justifyContent="center" mt={8}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+  if (eventError) {
+    return (
+      <Container maxWidth="sm" sx={{ mt: 4 }}>
+        <Alert severity="error">Error loading event: {eventError.message}</Alert>
+      </Container>
+    );
+  }
+  if (!event) {
+    return (
+      <Box textAlign="center" mt={8}>
+        <Typography>Event not found.</Typography>
+        <Button component={Link} to="/events" sx={{ mt: 2 }}>
+          Back to events
+        </Button>
+      </Box>
+    );
+  }
 
-  // готовим массив картинок для слайдера
-  const images = !loadingImages && imageUrls.length
-    ? imageUrls.map(url => ({ id: url, url }))
+  // Prepare images for slider
+  const images = !loadingImages && imageList.length
+    ? imageList.map(img => ({ id: img.id, url: img.url }))
     : [{ id: 'placeholder', url: PLACEHOLDER_IMAGE }];
+
+  const isFull = event.participantCount >= event.capacity;
 
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
+      {/* Event Title */}
       <Typography variant="h4" gutterBottom>
         {event.title}
       </Typography>
 
-      {/* Слайдер картинок */}
+      {/* Image Slider */}
       <Box mb={3}>
         {images.length > 1 ? (
-          <Slider dots infinite speed={500} slidesToShow={1} slidesToScroll={1}>
+          <Slider
+            dots
+            infinite
+            speed={500}
+            slidesToShow={1}
+            slidesToScroll={1}
+          >
             {images.map(img => (
               <CardMedia
                 key={img.id}
@@ -146,15 +168,49 @@ export default function EventDetailPage() {
         )}
       </Box>
 
-      {/* Описание */}
-      <Typography variant="subtitle1" color="textSecondary" gutterBottom>
-        {new Date(event.date).toLocaleString()} — {event.venue}
-      </Typography>
+      {/* Event Details */}
+      <Box mb={2}>
+        <Box display="flex" alignItems="center" gap={1}>
+          <EventIcon fontSize="small" />
+          <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+            {new Date(event.date).toLocaleDateString(undefined, {
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+            })}
+          </Typography>
+        </Box>
+        <Box display="flex" alignItems="center" gap={1} mt={1}>
+          <AccessTimeIcon fontSize="small" />
+          <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+            {new Date(event.date).toLocaleTimeString(undefined, {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </Typography>
+        </Box>
+        <Box display="flex" alignItems="center" gap={1} mt={1}>
+          <LocationOnIcon fontSize="small" />
+          <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+            {event.venue}
+          </Typography>
+        </Box>
+        <Box display="flex" alignItems="center" gap={4} mt={1}>
+          <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+            Capacity: {event.capacity}
+          </Typography>
+          <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+            Registered: {event.participantCount}
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Description */}
       <Typography variant="body1" paragraph>
         {event.description}
       </Typography>
 
-      {/* Регистрация */}
+      {/* Registration Controls */}
       {!isAdmin && accessToken && (
         <Box mb={3}>
           {loadingRegistration ? (
@@ -171,25 +227,33 @@ export default function EventDetailPage() {
               Cancel Registration
             </Button>
           ) : (
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={() => registerMutation.mutate()}
-              disabled={registerMutation.isLoading}
-            >
-              Register
-            </Button>
+            <>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => navigate(`/participants/register?eventId=${id}`)}
+                disabled={isFull}
+                title={isFull ? 'This event is sold out' : 'Register for this event'}
+              >
+                {isFull ? 'Sold Out' : 'Register'}
+              </Button>
+              {isFull && (
+                <Typography color="error" sx={{ mt: 1 }}>
+                  Sorry, this event is sold out.
+                </Typography>
+              )}
+            </>
           )}
         </Box>
       )}
 
-      {/* Список участников (доступен всем) */}
+      {/* Participants List */}
       <Box mb={3}>
         <Typography variant="h6">Participants</Typography>
         <ParticipantsList eventId={id} />
       </Box>
 
-      {/* Админ-панель */}
+      {/* Admin Panel */}
       {isAdmin && (
         <Box mb={3}>
           <Box display="flex" gap={1} mb={2}>
@@ -224,14 +288,14 @@ export default function EventDetailPage() {
         </Box>
       )}
 
+      {/* Back to Events */}
       <Button component={Link} to="/events" variant="text">
-        Back to events
+        Back to Events
       </Button>
     </Container>
   );
 }
 
-// Вынесли список участников в отдельный компонент для чистоты кода
 function ParticipantsList({ eventId }) {
   const { data: participants = [], isLoading } = useQuery({
     queryKey: ['participants', eventId],
@@ -239,7 +303,8 @@ function ParticipantsList({ eventId }) {
   });
 
   if (isLoading) return <CircularProgress size={24} />;
-  if (!participants.length) return <Typography>No participants yet.</Typography>;
+  if (!participants.length)
+    return <Typography color="textSecondary">No participants yet.</Typography>;
 
   return (
     <List>

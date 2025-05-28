@@ -32,6 +32,7 @@ export const AuthProvider = ({ children }) => {
       let decoded = {};
       try {
         decoded = jwtDecode(storedAT);
+        console.log('>>> JWT decoded payload:', decoded);
       } catch (e) {
         console.error('Failed to decode token:', e);
       }

@@ -8,8 +8,8 @@ using System.Threading.Tasks;
 
 namespace Events.Application.Queries
 {
-    public class GetEventImagesQuery : IRequest<IEnumerable<EventImageDto>>
+    public class GetParticipantByUserIdQuery : IRequest<ParticipantDto?>
     {
-        public Guid EventId { get; set; }
+        public string UserId { get; init; } = default!;
     }
 }

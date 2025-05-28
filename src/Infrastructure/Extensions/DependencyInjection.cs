@@ -6,7 +6,6 @@ using Events.Infrastructure.Identity;
 using Events.Infrastructure.Persistence;
 using Events.Infrastructure.Repositories;
 using Events.Infrastructure.Services.Authentication;
-using Events.Infrastructure.Services.Caching;
 using Events.Infrastructure.Services.Images;
 using Events.Infrastructure.Services.Notifications;
 using Events.Infrastructure.Settings;
@@ -93,7 +92,6 @@ namespace Events.Infrastructure.Extensions
 
             services.AddScoped<ICategoryRepository, CategoryRepository>();
             services.AddScoped<IEventImageRepository, EventImageRepository>();
-            services.AddTransient<IImageProxyService, ImageProxyService>();
 
             services.AddScoped<IEventRepository, EventRepository>();
             services.AddScoped<IParticipantRepository, ParticipantRepository>();
@@ -103,14 +101,7 @@ namespace Events.Infrastructure.Extensions
 
             services.AddTransient<INotificationService, SmtpNotificationService>();
 
-            // Добавьте, например:
-            services.AddDistributedMemoryCache();
-
-            services.AddTransient<CloudinaryImageService>();
-            services.AddTransient<IImageStorageService>(sp =>
-                new CachedImageService(
-                    sp.GetRequiredService<CloudinaryImageService>(),
-                    sp.GetRequiredService<IDistributedCache>()));
+            services.AddTransient<IImageStorageService,CloudinaryImageService>();
 
             return services;
         }

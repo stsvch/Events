@@ -7,7 +7,6 @@ export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  // Fallback to root if no redirect state is provided
   const from = location.state?.from?.pathname || '/';
 
   const [form, setForm] = useState({ username: '', password: '' });

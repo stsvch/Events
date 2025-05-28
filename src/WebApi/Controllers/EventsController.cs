@@ -2,11 +2,14 @@
 using Events.Application.DTOs;
 using Events.Application.Interfaces;
 using Events.Application.Queries;
+using Events.Domain.Common;
+using Events.Domain.Exceptions;
 using Events.WebApi.DTOs.Requests;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
+using System.Security.Claims;
 
 namespace Events.WebApi.Controllers
 {
@@ -15,31 +18,32 @@ namespace Events.WebApi.Controllers
     public class EventsController : ControllerBase
     {
         private readonly IMediator _mediator;
-        private readonly IImageStorageService _imageService;
 
-        public EventsController(IMediator mediator, IImageStorageService imageService)
+        public EventsController(IMediator mediator)
         {
             _mediator = mediator;
-            _imageService = imageService;
         }
 
 
         [HttpGet]
         [AllowAnonymous]
         public async Task<ActionResult<PagedResultDto<EventDto>>> GetEvents(
-                  [FromQuery] string? title = null,
-                  [FromQuery] DateTimeOffset? startDate = null,
-                  [FromQuery] DateTimeOffset? endDate = null,
-                  [FromQuery] string? venue = null,
-                  [FromQuery] Guid? categoryId = null,
-                  [FromQuery] int pageNumber = 1,
-                  [FromQuery] int pageSize = 10)
+            [FromQuery] string? title = null,
+            [FromQuery] DateTimeOffset? startDate = null,
+            [FromQuery] DateTimeOffset? endDate = null,
+            [FromQuery] string? venue = null,
+            [FromQuery] Guid? categoryId = null,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 10,
+            [FromQuery] SpecificationCombineMode combineMode = SpecificationCombineMode.And)
         {
-            if (!string.IsNullOrWhiteSpace(title)
-             || startDate.HasValue
-             || endDate.HasValue
-             || !string.IsNullOrWhiteSpace(venue)
-             || categoryId.HasValue)
+            bool hasFilters = !string.IsNullOrWhiteSpace(title)
+                           || startDate.HasValue
+                           || endDate.HasValue
+                           || !string.IsNullOrWhiteSpace(venue)
+                           || categoryId.HasValue;
+
+            if (hasFilters)
             {
                 var searchQuery = new SearchEventsQuery
                 {
@@ -49,8 +53,10 @@ namespace Events.WebApi.Controllers
                     Venue = venue,
                     CategoryId = categoryId,
                     PageNumber = pageNumber,
-                    PageSize = pageSize
+                    PageSize = pageSize,
+                    CombineMode = combineMode
                 };
+
                 var filtered = await _mediator.Send(searchQuery);
                 return Ok(filtered);
             }
@@ -60,6 +66,7 @@ namespace Events.WebApi.Controllers
                 PageNumber = pageNumber,
                 PageSize = pageSize
             };
+
             var result = await _mediator.Send(allQuery);
             return Ok(result);
         }
@@ -68,8 +75,15 @@ namespace Events.WebApi.Controllers
         [AllowAnonymous]
         public async Task<ActionResult<EventDetailDto>> GetEventDetails(Guid id)
         {
-            var dto = await _mediator.Send(new GetEventDetailQuery(id));
-            return dto is null ? NotFound() : Ok(dto);
+            try
+            {
+                var dto = await _mediator.Send(new GetEventDetailQuery(id));
+                return Ok(dto);
+            }
+            catch (EntityNotFoundException)
+            {
+                return NotFound();
+            }
         }
 
         [HttpPost]
@@ -131,6 +145,21 @@ namespace Events.WebApi.Controllers
             var command = new DeleteEventCommand { Id = id };
             await _mediator.Send(command);
             return NoContent();
+        }
+
+        [HttpGet("me")]
+        [Authorize(Policy = "RegisteredUser")]
+        public async Task<ActionResult<IEnumerable<EventDto>>> GetMyEvents()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+            {
+                return Unauthorized();
+            }
+
+            var query = new GetEventsByParticipantQuery(userId);
+            var events = await _mediator.Send(query);
+            return Ok(events);
         }
 
     }
