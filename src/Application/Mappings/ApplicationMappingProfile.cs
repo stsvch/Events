@@ -12,12 +12,21 @@ namespace Events.Application.Mappings
     {
         public ApplicationMappingProfile()
         {
-            CreateMap<Event, EventDto>();
+            CreateMap<Event, EventDto>()
+                .ForMember(d => d.Availability,
+                           opt => opt.MapFrom(src =>
+                               src.Participants.Count < src.Capacity
+                                   ? "there are spots"
+                                   : "no spots"));
 
             CreateMap<Event, EventDetailDto>()
-                .ForMember(d => d.Description, o => o.MapFrom(s => s.Description))
-                .ForMember(d => d.ParticipantCount, o => o.MapFrom(s => s.Participants.Count))
-                .ForMember(d => d.Images, o => o.MapFrom(s => s.Images));
+                .ForMember(d => d.ParticipantCount,
+                           opt => opt.MapFrom(src => src.Participants.Count))
+                .ForMember(d => d.Images,
+                           opt => opt.MapFrom(src => src.Images));
+
+            CreateMap<bool, RegistrationStatusDto>()
+                .ConvertUsing(src => new RegistrationStatusDto { IsRegistered = src });
 
             CreateMap<EventImage, EventImageDto>();
 
@@ -26,29 +35,31 @@ namespace Events.Application.Mappings
                 .ForMember(dest => dest.Email, opt => opt.MapFrom(src => src.Email.Value));
 
             CreateMap<Category, CategoryDto>();
-
-            CreateMap<CreateEventCommand, Event>()
-                .ConstructUsing(cmd => new Event(
-                    Guid.NewGuid(),
-                    cmd.Title,
-                    cmd.Description,   
-                    cmd.Date,
-                    cmd.Venue,
-                    cmd.CategoryId,
-                    cmd.Capacity));
-
+            CreateMap<CreateCategoryCommand, Category>()
+                .ConstructUsing(cmd => new Category(cmd.Name));
 
             CreateMap<AddEventImageCommand, EventImage>()
                 .ConstructUsing(cmd => new EventImage(
                     cmd.EventId,
                     cmd.Url,
                     DateTimeOffset.UtcNow));
+
             CreateMap<CreateParticipantProfileCommand, Participant>()
                 .ConstructUsing(cmd => new Participant(
                     new PersonName(cmd.FirstName, cmd.LastName),
                     new EmailAddress(cmd.Email),
                     cmd.DateOfBirth,
                     cmd.UserId));
+
+            CreateMap<CreateEventCommand, Event>()
+                            .ConstructUsing(cmd => new Event(
+                                Guid.NewGuid(),
+                                cmd.Title,
+                                cmd.Description,
+                                cmd.Date,
+                                cmd.Venue,
+                                cmd.CategoryId,
+                                cmd.Capacity));
         }
     }
 }

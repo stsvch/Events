@@ -8,25 +8,19 @@ using MediatR;
 
 namespace Events.Application.Handlers
 {
-    public class GetAllCategoriesQueryHandler
-        : IRequestHandler<GetAllCategoriesQuery, IEnumerable<CategoryDto>>
+    public class GetAllCategoriesQueryHandler: IRequestHandler<GetAllCategoriesQuery, IEnumerable<CategoryDto>>
     {
         private readonly ICategoryRepository _repo;
         private readonly IMapper _mapper;
 
-        public GetAllCategoriesQueryHandler(
-            ICategoryRepository repo, IMapper mapper)
+        public GetAllCategoriesQueryHandler(ICategoryRepository repo, IMapper mapper)
         {
             _repo = repo;
             _mapper = mapper;
         }
-        public async Task<IEnumerable<CategoryDto>> Handle(
-            GetAllCategoriesQuery request,
-            CancellationToken cancellationToken)
+        public async Task<IEnumerable<CategoryDto>> Handle(GetAllCategoriesQuery request, CancellationToken cancellationToken)
         {
-            var categories = await _repo.ListAsync(
-                new TrueSpecification<Category>(),
-                cancellationToken);
+            var categories = await _repo.ListAsync(new TrueSpecification<Category>(),cancellationToken);
 
             return _mapper.Map<IEnumerable<CategoryDto>>(categories);
         }

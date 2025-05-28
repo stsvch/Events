@@ -10,16 +10,14 @@ namespace Events.WebApi
             var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
             var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
-            // 1. Создаём роль Admin, если её ещё нет
             const string adminRole = "Admin";
             if (!await roleManager.RoleExistsAsync(adminRole))
             {
                 await roleManager.CreateAsync(new IdentityRole(adminRole));
             }
 
-            // 2. Создаём пользователя admin, если его нет
             const string adminUserName = "admin";
-            const string adminPassword = "Admin1"; // отвечает требованиям: 6+ символов, есть Upper, Lower, Digit
+            const string adminPassword = "Admin1"; 
 
             if (await userManager.FindByNameAsync(adminUserName) == null)
             {
@@ -32,12 +30,10 @@ namespace Events.WebApi
                 var result = await userManager.CreateAsync(admin, adminPassword);
                 if (result.Succeeded)
                 {
-                    // 3. Добавляем пользователя в роль Admin
                     await userManager.AddToRoleAsync(admin, adminRole);
                 }
                 else
                 {
-                    // на продакшене логируйте ошибки result.Errors
                     throw new Exception($"Не удалось создать админа: {string.Join(", ", result.Errors)}");
                 }
             }

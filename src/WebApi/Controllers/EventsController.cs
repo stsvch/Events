@@ -6,6 +6,7 @@ using Events.WebApi.DTOs.Requests;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.StaticFiles;
 
 namespace Events.WebApi.Controllers
 {
@@ -22,20 +23,27 @@ namespace Events.WebApi.Controllers
             _imageService = imageService;
         }
 
+
         [HttpGet]
         [AllowAnonymous]
         public async Task<ActionResult<PagedResultDto<EventDto>>> GetEvents(
-            [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageSize = 10,
-            [FromQuery] DateTimeOffset? startDate = null,
-            [FromQuery] DateTimeOffset? endDate = null,
-            [FromQuery] string? venue = null,
-            [FromQuery] Guid? categoryId = null)
+                  [FromQuery] string? title = null,
+                  [FromQuery] DateTimeOffset? startDate = null,
+                  [FromQuery] DateTimeOffset? endDate = null,
+                  [FromQuery] string? venue = null,
+                  [FromQuery] Guid? categoryId = null,
+                  [FromQuery] int pageNumber = 1,
+                  [FromQuery] int pageSize = 10)
         {
-            if (startDate.HasValue || endDate.HasValue || !string.IsNullOrWhiteSpace(venue) || categoryId.HasValue)
+            if (!string.IsNullOrWhiteSpace(title)
+             || startDate.HasValue
+             || endDate.HasValue
+             || !string.IsNullOrWhiteSpace(venue)
+             || categoryId.HasValue)
             {
                 var searchQuery = new SearchEventsQuery
                 {
+                    Title = title,
                     StartDate = startDate,
                     EndDate = endDate,
                     Venue = venue,
@@ -43,33 +51,32 @@ namespace Events.WebApi.Controllers
                     PageNumber = pageNumber,
                     PageSize = pageSize
                 };
-                var filteredResult = await _mediator.Send(searchQuery);
-                return Ok(filteredResult);
+                var filtered = await _mediator.Send(searchQuery);
+                return Ok(filtered);
             }
 
-            var query = new GetAllEventsQuery
+            var allQuery = new GetAllEventsQuery
             {
                 PageNumber = pageNumber,
-                PageSize = pageSize,
-                IncludeDetails = false
+                PageSize = pageSize
             };
-            var result = await _mediator.Send(query);
+            var result = await _mediator.Send(allQuery);
             return Ok(result);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:guid}")]
         [AllowAnonymous]
         public async Task<ActionResult<EventDetailDto>> GetEventDetails(Guid id)
         {
-            var query = new GetEventDetailQuery(id);
-            var eventDetail = await _mediator.Send(query);
-            return eventDetail != null ? Ok(eventDetail) : NotFound();
+            var dto = await _mediator.Send(new GetEventDetailQuery(id));
+            return dto is null ? NotFound() : Ok(dto);
         }
 
         [HttpPost]
         [Authorize(Policy = "AdminOnly")]
-        public async Task<IActionResult> CreateEvent([FromBody] CreateEventRequest request)
+        public async Task<IActionResult> CreateEvent([FromForm] CreateEventRequest request)
         {
+
             var command = new CreateEventCommand
             {
                 Title = request.Title,
@@ -79,19 +86,15 @@ namespace Events.WebApi.Controllers
                 Description = request.Description,
                 Capacity = request.Capacity
             };
+
             var newEventId = await _mediator.Send(command);
-            return CreatedAtAction(nameof(GetEventDetails), new { id = newEventId });
-        }
 
-        [HttpGet("{id}/summary")]
-        [AllowAnonymous]
-        public async Task<ActionResult<EventDto>> GetEventSummary(Guid id)
-        {
-            var query = new GetEventSummaryQuery(id);
-            var summary = await _mediator.Send(query);
-            return summary != null ? Ok(summary) : NotFound();
+            return CreatedAtAction(
+                nameof(GetEventDetails),
+                new { id = newEventId },
+                new { id = newEventId }
+            );
         }
-
 
         [HttpPut("{id}")]
         [Authorize(Policy = "AdminOnly")]
@@ -128,34 +131,6 @@ namespace Events.WebApi.Controllers
             var command = new DeleteEventCommand { Id = id };
             await _mediator.Send(command);
             return NoContent();
-        }
-
-        [RequestSizeLimit(100_000_000)]
-        [HttpPost("{id}/images")]
-        [Authorize(Policy = "AdminOnly")]
-        public async Task<IActionResult> UploadEventImage(Guid id, [FromForm] UploadEventImageRequest request)
-        {
-            if (request.File == null && string.IsNullOrWhiteSpace(request.Url))
-                return BadRequest("Either file or Url must be provided.");
-
-            string imageUrl;
-            if (request.File != null)
-            {
-                using var stream = request.File.OpenReadStream();
-                imageUrl = await _imageService.UploadAsync(stream, request.File.FileName);
-            }
-            else
-            {
-                imageUrl = request.Url;
-            }
-
-            await _mediator.Send(new AddEventImageCommand
-            {
-                EventId = id,
-                Url = imageUrl
-            });
-
-            return Ok(new { url = imageUrl });
         }
 
     }

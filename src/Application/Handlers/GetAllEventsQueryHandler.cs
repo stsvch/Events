@@ -8,7 +8,6 @@ using MediatR;
 
 namespace Events.Application.Handlers
 {
-
     public class GetAllEventsQueryHandler : IRequestHandler<GetAllEventsQuery, PagedResultDto<EventDto>>
     {
         private readonly IEventRepository _repo;
@@ -20,18 +19,9 @@ namespace Events.Application.Handlers
             _mapper = mapper;
         }
 
-        public async Task<PagedResultDto<EventDto>> Handle(
-            GetAllEventsQuery query,
-            CancellationToken cancellationToken)
+        public async Task<PagedResultDto<EventDto>> Handle(GetAllEventsQuery query, CancellationToken cancellationToken)
         {
-            ISpecification<Event> spec = Specification<Event>.True;
-
-            var paged = await _repo.ListAsync(
-                spec,
-                query.PageNumber,
-                query.PageSize,
-                query.IncludeDetails,
-                cancellationToken);
+            var paged = await _repo.ListAsync( Specification<Event>.True, query.PageNumber,query.PageSize,includeDetails: true,cancellationToken);
 
             return new PagedResultDto<EventDto>
             {
@@ -42,5 +32,4 @@ namespace Events.Application.Handlers
             };
         }
     }
-
 }

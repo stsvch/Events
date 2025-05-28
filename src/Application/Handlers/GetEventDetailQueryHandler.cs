@@ -23,11 +23,10 @@ namespace Events.Application.Handlers
             _mapper = mapper;
         }
 
-        public async Task<EventDetailDto> Handle(GetEventDetailQuery request, CancellationToken cancellationToken)
+        public async Task<EventDetailDto> Handle(  GetEventDetailQuery request,  CancellationToken cancellationToken)
         {
-            var entity = await _repo.GetByIdWithDetailsAsync(request.Id);
-            if (entity == null)
-                throw new EntityNotFoundException(request.Id);
+            var entity = await _repo.GetByIdWithDetailsAsync( request.Id, cancellationToken)?? throw new EntityNotFoundException(request.Id);
+
             return _mapper.Map<EventDetailDto>(entity);
         }
     }

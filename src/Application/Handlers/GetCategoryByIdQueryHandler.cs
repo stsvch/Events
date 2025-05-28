@@ -7,22 +7,18 @@ using MediatR;
 
 namespace Events.Application.Handlers
 {
-    public class GetCategoryByIdQueryHandler
-            : IRequestHandler<GetCategoryByIdQuery, CategoryDto>
+    public class GetCategoryByIdQueryHandler: IRequestHandler<GetCategoryByIdQuery, CategoryDto>
     {
         private readonly ICategoryRepository _repo;
         private readonly IMapper _mapper;
 
-        public GetCategoryByIdQueryHandler(
-            ICategoryRepository repo, IMapper mapper)
+        public GetCategoryByIdQueryHandler( ICategoryRepository repo, IMapper mapper)
         {
             _repo = repo;
             _mapper = mapper;
         }
 
-        public async Task<CategoryDto> Handle(
-            GetCategoryByIdQuery request,
-            CancellationToken cancellationToken)
+        public async Task<CategoryDto> Handle(GetCategoryByIdQuery request, CancellationToken cancellationToken)
         {
             var entity = await _repo.GetByIdAsync(request.Id, cancellationToken);
             if (entity == null)

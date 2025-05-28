@@ -6,23 +6,18 @@ using MediatR;
 
 namespace Events.Application.Handlers
 {
-    public class NotifyParticipantsAboutChangeCommandHandler
-    : IRequestHandler<NotifyParticipantsAboutChangeCommand, Unit>
+    public class NotifyParticipantsAboutChangeCommandHandler : IRequestHandler<NotifyParticipantsAboutChangeCommand, Unit>
     {
         private readonly IEventRepository _eventRepo;
         private readonly INotificationService _notifier;
 
-        public NotifyParticipantsAboutChangeCommandHandler(
-            IEventRepository eventRepo,
-            INotificationService notifier)
+        public NotifyParticipantsAboutChangeCommandHandler( IEventRepository eventRepo,INotificationService notifier)
         {
             _eventRepo = eventRepo;
             _notifier = notifier;
         }
 
-        public async Task<Unit> Handle(
-            NotifyParticipantsAboutChangeCommand command,
-            CancellationToken cancellationToken)
+        public async Task<Unit> Handle(NotifyParticipantsAboutChangeCommand command, CancellationToken cancellationToken)
         {
             var evt = await _eventRepo.GetByIdWithDetailsAsync(command.EventId, cancellationToken);
             if (evt == null)
@@ -42,8 +37,7 @@ namespace Events.Application.Handlers
             <p>{command.Message}</p>
             <p>Please review the changes in your dashboard.</p>
             <hr/>
-            <p>Best regards,<br/>Events App</p>
-        ";
+            <p>Best regards,<br/>Events App</p> ";
 
             foreach (var ep in evt.Participants)
             {

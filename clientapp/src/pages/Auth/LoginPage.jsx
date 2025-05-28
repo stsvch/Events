@@ -1,21 +1,26 @@
 import React, { useState } from 'react';
 import { TextField, Button, Card, Typography, Box } from '@mui/material';
 import { useAuth } from '../../hooks/useAuth';
-import { useHistory, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 
 export default function LoginPage() {
   const { login } = useAuth();
-  const history = useHistory();
-  const { from } = useLocation().state || { from: { pathname: '/' } };
+  const navigate = useNavigate();
+  const location = useLocation();
+  // Fallback to root if no redirect state is provided
+  const from = location.state?.from?.pathname || '/';
+
   const [form, setForm] = useState({ username: '', password: '' });
   const [error, setError] = useState('');
 
   const handleChange = e => setForm(f => ({ ...f, [e.target.name]: e.target.value }));
+
   const handleSubmit = async e => {
     e.preventDefault();
     try {
       await login(form);
-      history.replace(from);
+      // Navigate to the original destination or home, replacing history
+      navigate(from, { replace: true });
     } catch (err) {
       setError(err.message || 'Login failed');
     }

@@ -1,29 +1,22 @@
 // src/utils/PrivateRoute.jsx
 import React from 'react';
-import { Route, Redirect } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
-// roles: массив строк, напр. ['Admin', 'RegisteredUser']
-function PrivateRoute({ component: Component, roles = [], ...rest }) {
+export default function PrivateRoute({ roles = [] }) {
   const { user, accessToken } = useAuth();
+  const location = useLocation();
 
-  return (
-    <Route
-      {...rest}
-      render={props => {
-        if (!accessToken) {
-          return <Redirect to={{ pathname: '/login', state: { from: props.location } }} />;
-        }
-        if (
-          roles.length > 0 &&
-          (!user?.roles || !roles.some(r => user.roles.includes(r)))
-        ) {
-          return <Redirect to="/unauthorized" />;
-        }
-        return <Component {...props} />;
-      }}
-    />
-  );
+  if (!accessToken) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (
+    roles.length > 0 &&
+    (!user?.roles || !roles.some(role => user.roles.includes(role)))
+  ) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+
+  return <Outlet />;
 }
-
-export default PrivateRoute;

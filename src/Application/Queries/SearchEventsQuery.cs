@@ -10,6 +10,7 @@ namespace Events.Application.Queries
 {
     public class SearchEventsQuery : IRequest<PagedResultDto<EventDto>>
     {
+        public string? Title { get; set; }
         public DateTimeOffset? StartDate { get; set; }
         public DateTimeOffset? EndDate { get; set; }
         public string Venue { get; set; }

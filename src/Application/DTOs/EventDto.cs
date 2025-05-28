@@ -13,5 +13,6 @@ namespace Events.Application.DTOs
         public DateTimeOffset Date { get; set; }
         public string Venue { get; set; }
         public Guid CategoryId { get; set; }
+        public string Availability { get; set; }
     }
 }

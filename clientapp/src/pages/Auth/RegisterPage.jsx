@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { TextField, Button, Card, Typography, Box } from '@mui/material';
 import { useAuth } from '../../hooks/useAuth';
-import { useHistory, Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 export default function RegisterPage() {
   const { register } = useAuth();
-  const history = useHistory();
+  const navigate = useNavigate();
+
   const [form, setForm] = useState({
     username: '',
     firstName: '',
@@ -34,7 +35,8 @@ export default function RegisterPage() {
         lastName: form.lastName,
         dateOfBirth: form.dateOfBirth,
       });
-      history.push('/events');
+      // Navigate to events page after successful registration
+      navigate('/events', { replace: true });
     } catch (err) {
       setError(err.message || 'Registration failed');
     }
@@ -64,7 +66,9 @@ export default function RegisterPage() {
           />
           <TextField label="Password" name="password" type="password" value={form.password} onChange={handleChange} fullWidth required />
           <TextField label="Confirm Password" name="confirmPassword" type="password" value={form.confirmPassword} onChange={handleChange} fullWidth required />
-          <Button type="submit" variant="contained" color="primary" fullWidth>Register</Button>
+          <Button type="submit" variant="contained" color="primary" fullWidth>
+            Register
+          </Button>
         </Box>
         <Typography variant="body2" mt={2} align="center">
           Already have an account? <Link to="/login">Login</Link>

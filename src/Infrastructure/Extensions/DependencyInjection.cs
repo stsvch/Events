@@ -16,6 +16,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Events.Infrastructure.Extensions
@@ -27,7 +28,9 @@ namespace Events.Infrastructure.Extensions
             IConfiguration config)
         {
             services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(config.GetConnectionString("DefaultConnection")));
+                options.UseSqlServer(config.GetConnectionString("DefaultConnection"))
+                .EnableSensitiveDataLogging()
+                .LogTo(Console.WriteLine, LogLevel.Information));
 
             services.AddDbContext<IdentityDbContext>(options =>
                 options.UseSqlServer(config.GetConnectionString("IdentityConnection")));
@@ -89,10 +92,11 @@ namespace Events.Infrastructure.Extensions
             services.AddScoped<IJwtTokenService, JwtTokenService>();
 
             services.AddScoped<ICategoryRepository, CategoryRepository>();
+            services.AddScoped<IEventImageRepository, EventImageRepository>();
+            services.AddTransient<IImageProxyService, ImageProxyService>();
 
             services.AddScoped<IEventRepository, EventRepository>();
             services.AddScoped<IParticipantRepository, ParticipantRepository>();
-            services.AddScoped<IEventParticipantRepository, EventParticipantRepository>();
 
             services.Configure<SmtpSettings>(config.GetSection("SmtpSettings"));
             services.Configure<CloudinarySettings>(config.GetSection("CloudinarySettings"));

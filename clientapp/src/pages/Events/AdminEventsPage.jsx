@@ -1,6 +1,6 @@
 // src/pages/Events/AdminEventsPage.jsx
-import React, { useState, useEffect, useCallback } from 'react';
-import { useHistory, Link } from 'react-router-dom';
+import React, { useState, useMemo } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -14,70 +14,89 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
+import { useQuery, useMutation, useQueries, useQueryClient } from '@tanstack/react-query';
 import { getEvents, deleteEvent, uploadEventImage } from '../../api/events';
+import { getFirstEventImage } from '../../api/images';
+
+const PLACEHOLDER_IMAGE = '/images/placeholder.png';
+const PAGE_SIZE = 10;
 
 export default function AdminEventsPage() {
-  const history = useHistory();
-
-  // State
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  // Pagination
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [pageNumber, setPageNumber] = useState(1);
-  const pageSize = 10;
-  const [totalPages, setTotalPages] = useState(1);
 
-  // Track which event is uploading
-  const [uploadingId, setUploadingId] = useState(null);
+  // 1) Загрузка страниц событий
+  const {
+    data: eventsPage,
+    isLoading: loadingEvents,
+    isError: eventsError,
+    error: eventsErrorObj,
+  } = useQuery({
+    queryKey: ['adminEvents', pageNumber],
+    queryFn:   () => getEvents({ pageNumber, pageSize: PAGE_SIZE }).then(res => res.data),
+    keepPreviousData: true,
+  });
 
-  // Fetch events
-  const fetchEvents = useCallback(async () => {
-    setLoading(true);
-    setError('');
-    try {
-      const { data } = await getEvents({ pageNumber, pageSize });
-      setEvents(data.items);
-      setTotalPages(Math.ceil(data.totalCount / pageSize));
-    } catch (err) {
-      setError(err.message || 'Failed to load events');
-    } finally {
-      setLoading(false);
-    }
-  }, [pageNumber]);
 
-  useEffect(() => {
-    fetchEvents();
-  }, [fetchEvents]);
+  const events = eventsPage?.items || [];
+  const totalPages = useMemo(
+    () => Math.ceil((eventsPage?.totalCount || 0) / PAGE_SIZE),
+    [eventsPage]
+  );
 
-  // Delete handler
-  const handleDelete = async id => {
-    if (!window.confirm('Are you sure you want to delete this event?')) return;
-    try {
-      await deleteEvent(id);
-      fetchEvents();
-    } catch (err) {
-      alert(err.message || 'Delete failed');
-    }
-  };
+  // 2) Параллельная загрузка первой картинки для каждого события
+  const imageQueries = useQueries({
+    queries: events.map(evt => ({
+      queryKey: ['event', evt.id, 'firstImage'],
+      queryFn: () => getFirstEventImage(evt.id),
+      enabled: !!events.length,
+      placeholderData: PLACEHOLDER_IMAGE,
+      onError: err => {
+        // игнорируем 404
+        if (err.response?.status !== 404) console.error(err);
+      },
+    })),
+  });
 
-  // Image upload handler
-  const handleImageUpload = async (id, file) => {
-    if (!file) return;
-    setUploadingId(id);
-    try {
-      await uploadEventImage(id, file);
-      fetchEvents();
-    } catch {
-      alert('Image upload failed');
-    } finally {
-      setUploadingId(null);
-    }
-  };
+  // 3) Мутации
+  const deleteMutation = useMutation({
+    mutationFn: id => deleteEvent(id),
+    onSuccess:  () => queryClient.invalidateQueries(['adminEvents', pageNumber]),
+  });
 
+  const uploadMutation = useMutation({
+    mutationFn: ({ eventId, file }) => uploadEventImage(eventId, { file }),
+    onSuccess:  (_, { eventId }) => {
+      queryClient.invalidateQueries(['adminEvents', pageNumber]);
+      queryClient.invalidateQueries(['event', eventId, 'firstImage']);
+    },
+  });
+
+
+  // Пагинация
   const prevPage = () => setPageNumber(n => Math.max(1, n - 1));
   const nextPage = () => setPageNumber(n => Math.min(totalPages, n + 1));
+
+  // UI
+  if (loadingEvents) {
+    return (
+      <Box display="flex" justifyContent="center" mt={8}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+  if (eventsError) {
+    return (
+      <Alert
+        severity="error"
+        action={<Button onClick={() => queryClient.invalidateQueries(['adminEvents', pageNumber])}>Retry</Button>}
+        sx={{ mb: 3 }}
+      >
+        {eventsErrorObj.message || 'Failed to load events'}
+      </Alert>
+    );
+  }
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
@@ -87,55 +106,35 @@ export default function AdminEventsPage() {
         <Button
           variant="contained"
           color="success"
-          onClick={() => history.push('/admin/events/create')}
+          onClick={() => navigate('/admin/events/create')}
         >
           Create New Event
         </Button>
       </Box>
 
-      {/* Loading */}
-      {loading && (
-        <Box display="flex" justifyContent="center" mt={4}>
-          <CircularProgress />
-        </Box>
-      )}
-
-      {/* Error */}
-      {error && (
-        <Alert
-          severity="error"
-          action={
-            <Button color="inherit" size="small" onClick={fetchEvents}>
-              Retry
-            </Button>
-          }
-          sx={{ mb: 3 }}
-        >
-          {error}
-        </Alert>
-      )}
-
       {/* Empty State */}
-      {!loading && !error && events.length === 0 && (
+      {!loadingEvents && events.length === 0 && (
         <Typography align="center" color="textSecondary">
           No events found.
         </Typography>
       )}
 
-      {/* Event Grid */}
-      {!loading && !error && events.length > 0 && (
-        <Grid container spacing={3}>
-          {events.map(evt => (
+      {/* Grid */}
+      <Grid container spacing={3}>
+        {events.map((evt, idx) => {
+          const imgQ = imageQueries[idx];
+          const imgUrl = imgQ.data;
+          const isUploading = uploadMutation.isLoading && uploadMutation.variables?.eventId === evt.id;
+
+          return (
             <Grid item xs={12} sm={6} md={4} key={evt.id}>
               <Card>
-                {evt.imageUrl && (
-                  <CardMedia
-                    component="img"
-                    height="140"
-                    image={evt.imageUrl}
-                    alt={evt.title}
-                  />
-                )}
+                <CardMedia
+                  component="img"
+                  height="140"
+                  image={imgUrl}
+                  alt={evt.title}
+                />
                 <CardContent>
                   <Typography variant="h6">{evt.title}</Typography>
                   <Typography variant="body2" color="textSecondary">
@@ -145,39 +144,47 @@ export default function AdminEventsPage() {
                 <CardActions>
                   <Button
                     size="small"
-                    onClick={() => history.push(`/admin/events/edit/${evt.id}`)}
+                    component={Link}
+                    to={`/admin/events/edit/${evt.id}`}
                   >
                     Edit
                   </Button>
                   <Button
                     size="small"
                     color="error"
-                    onClick={() => handleDelete(evt.id)}
+                    onClick={() => {
+                      if (window.confirm('Are you sure you want to delete this event?')) {
+                        deleteMutation.mutate(evt.id);
+                      }
+                    }}
+                    disabled={deleteMutation.isLoading}
                   >
                     Delete
                   </Button>
                   <Button
                     size="small"
                     component="label"
-                    disabled={uploadingId === evt.id}
+                    disabled={isUploading}
                   >
-                    {uploadingId === evt.id ? 'Uploading…' : 'Upload Image'}
+                    {isUploading ? 'Uploading…' : 'Upload Image'}
                     <input
                       type="file"
                       hidden
                       accept="image/*"
-                      onChange={e => handleImageUpload(evt.id, e.target.files[0])}
+                      onChange={e =>
+                        uploadMutation.mutate({ eventId: evt.id, file: e.target.files[0] })
+                      }
                     />
                   </Button>
                 </CardActions>
               </Card>
             </Grid>
-          ))}
-        </Grid>
-      )}
+          );
+        })}
+      </Grid>
 
       {/* Pagination */}
-      {!loading && !error && events.length > 0 && (
+      {events.length > 0 && (
         <Box display="flex" justifyContent="space-between" alignItems="center" mt={4}>
           <Button variant="outlined" disabled={pageNumber === 1} onClick={prevPage}>
             Previous

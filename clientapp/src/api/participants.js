@@ -6,12 +6,17 @@ export function getParticipants(eventId) {
 }
 
 export function registerParticipant({ eventId }) {
-  // server will pick up userId from the JWT, no other fields needed
   return api.post('/participants/register', { eventId });
 }
 
 export function unregisterParticipant(participantId, eventId) {
   return api.delete(`/participants/${participantId}`, {
+    params: { eventId },
+  });
+}
+
+export function isRegistered(eventId) {
+  return api.get('/participants/is-registered', {
     params: { eventId },
   });
 }

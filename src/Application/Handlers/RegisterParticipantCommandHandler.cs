@@ -13,29 +13,20 @@ namespace Events.Application.Handlers
         private readonly IEventRepository _eventRepo;
         private readonly IParticipantRepository _partRepo;
 
-        public RegisterParticipantCommandHandler(
-            IEventRepository eventRepo,
-            IParticipantRepository partRepo)
+        public RegisterParticipantCommandHandler(IEventRepository eventRepo,IParticipantRepository partRepo)
         {
             _eventRepo = eventRepo;
             _partRepo = partRepo;
         }
 
-        public async Task<Unit> Handle(
-            RegisterParticipantCommand command,
-            CancellationToken cancellationToken)
+        public async Task<Unit> Handle(RegisterParticipantCommand command, CancellationToken cancellationToken)
         {
-            var evt = await _eventRepo
-                .GetByIdWithDetailsAsync(command.EventId, cancellationToken)
+            var evt = await _eventRepo.GetByIdWithDetailsAsync(command.EventId, cancellationToken)
                 ?? throw new EntityNotFoundException(command.EventId);
 
-            var participants = await _partRepo
-                .ListAsync(
-                   new ParticipantByUserIdSpecification(command.UserId),
-                   cancellationToken);
+            var participants = await _partRepo.ListAsync(new ParticipantByUserIdSpecification(command.UserId),cancellationToken);
 
-            var participant = participants.SingleOrDefault()
-                ?? throw new EntityNotFoundException();
+            var participant = participants.SingleOrDefault()?? throw new EntityNotFoundException();
 
             if (evt.Participants.Any(ep => ep.ParticipantId == participant.Id))
                 throw new ForbiddenException("You are already registered for this event.");

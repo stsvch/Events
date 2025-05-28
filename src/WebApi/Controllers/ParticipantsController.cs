@@ -22,7 +22,7 @@ namespace Events.WebApi.Controllers
             _mediator = mediator;
         }
         [HttpGet]
-        [Authorize(Policy = "AdminOnly")]
+        [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<ParticipantDto>>> GetParticipants([FromQuery] Guid? eventId)
         {
             if (eventId.HasValue)
@@ -63,6 +63,22 @@ namespace Events.WebApi.Controllers
             };
             await _mediator.Send(command);
             return NoContent();
+        }
+
+        [HttpGet("is-registered")]
+        public async Task<ActionResult<RegistrationStatusDto>> IsRegistered([FromQuery] Guid eventId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            var status = await _mediator.Send(new CheckUserRegistrationQuery
+            {
+                EventId = eventId,
+                UserId = userId
+            });
+
+            return Ok(status);
         }
     }
 }

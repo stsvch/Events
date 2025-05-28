@@ -10,7 +10,7 @@ namespace Events.Domain.Entities
         public EmailAddress Email { get; private set; }
         public DateTimeOffset DateOfBirth { get; private set; }
 
-        public string UserId { get; set; } = null!;
+        public string UserId { get; set; }
 
         private readonly List<EventParticipant> _participations = new();
         public IReadOnlyCollection<EventParticipant> Participations => _participations.AsReadOnly();

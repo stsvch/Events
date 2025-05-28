@@ -8,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace Events.Application.Queries
 {
-    public class GetEventDetailByTitleQuery : IRequest<EventDetailDto>
+    public class CheckUserRegistrationQuery : IRequest<RegistrationStatusDto>
     {
-        public string Title { get; }
-        public GetEventDetailByTitleQuery(string title) => Title = title;
+        public Guid EventId { get; set; }
+        public string UserId { get; set; }
     }
 }

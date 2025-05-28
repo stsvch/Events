@@ -1,4 +1,5 @@
-﻿using Events.Application.Commands;
+﻿using AutoMapper;
+using Events.Application.Commands;
 using Events.Domain.Entities;
 using Events.Domain.Repositories;
 using Events.Domain.ValueObjects;
@@ -12,22 +13,26 @@ using System.Threading.Tasks;
 namespace Events.Application.Handlers
 {
     public class CreateParticipantProfileCommandHandler
-        : IRequestHandler<CreateParticipantProfileCommand, Unit>
+            : IRequestHandler<CreateParticipantProfileCommand, Unit>
     {
         private readonly IParticipantRepository _participantRepo;
+        private readonly IMapper _mapper;
 
-        public CreateParticipantProfileCommandHandler(IParticipantRepository participantRepo)
-            => _participantRepo = participantRepo;
-
-        public async Task<Unit> Handle(CreateParticipantProfileCommand cmd, CancellationToken ct)
+        public CreateParticipantProfileCommandHandler(
+            IParticipantRepository participantRepo,
+            IMapper mapper)
         {
-            var participant = new Participant(
-                new PersonName(cmd.FirstName, cmd.LastName),
-                new EmailAddress(cmd.Email),
-                cmd.DateOfBirth,
-                cmd.UserId);
+            _participantRepo = participantRepo;
+            _mapper = mapper;
+        }
 
-            await _participantRepo.AddAsync(participant);
+        public async Task<Unit> Handle(
+            CreateParticipantProfileCommand cmd,
+            CancellationToken ct)
+        {
+            var participant = _mapper.Map<Participant>(cmd);
+
+            await _participantRepo.AddAsync(participant, ct);
             return Unit.Value;
         }
     }

@@ -1,6 +1,6 @@
 // src/pages/Events/EditEventPage.jsx
 import React, { useState, useEffect } from 'react';
-import { useParams, useHistory } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
   Box,
@@ -13,15 +13,16 @@ import {
   Button,
   CircularProgress,
   Alert,
-  Grid,
 } from '@mui/material';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import { getEventById, updateEvent } from '../../api/events';
 import { getCategories } from '../../api/categories';
 
 export default function EditEventPage() {
   const { id } = useParams();
-  const history = useHistory();
+  const navigate = useNavigate();
 
+  // Форму заведём в локальный стейт
   const [form, setForm] = useState({
     title: '',
     date: '',
@@ -30,64 +31,67 @@ export default function EditEventPage() {
     description: '',
     capacity: '',
   });
-  const [categories, setCategories] = useState([]);
 
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-
-  // Load event and categories on mount
-  useEffect(() => {
-    (async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const [{ data: evt }, { data: cats }] = await Promise.all([
-          getEventById(id),
-          getCategories(),
-        ]);
+  // ————————————————————————————————————————————————
+  // 1) Загрузка события
+  const {
+    data: eventResponse,
+    isLoading: loadingEvent,
+    isError: isEventError,
+    error: eventError,
+  } = useQuery(
+    ['event', id],
+    () => getEventById(id).then(res => res.data),
+    {
+      onSuccess: evt => {
         setForm({
           title: evt.title,
-          // slice to fit <input type="datetime-local" />
           date: evt.date.slice(0, 16),
           venue: evt.venue,
           categoryId: evt.categoryId,
           description: evt.description,
           capacity: String(evt.capacity),
         });
-        setCategories(cats);
-      } catch (err) {
-        setError(err.message || 'Failed to load data');
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [id]);
+      },
+      staleTime: Infinity,
+      cacheTime: Infinity,
+    }
+  );
+
+  // 2) Загрузка категорий
+  const {
+    data: categories = [],
+    isLoading: loadingCats,
+    isError: isCatsError,
+    error: catsError,
+  } = useQuery(['categories'], () => getCategories().then(res => res.data), {
+    staleTime: 5 * 60_000,
+  });
+
+  // 3) Мутация для сохранения
+  const saveMutation = useMutation(
+    updated => updateEvent(id, updated),
+    {
+      onSuccess: () => {
+        navigate('/admin/events', { replace: true });
+      },
+    }
+  );
 
   const handleChange = e => {
     const { name, value } = e.target;
     setForm(f => ({ ...f, [name]: value }));
   };
 
-  const handleSubmit = async e => {
+  const handleSubmit = e => {
     e.preventDefault();
-    setSaving(true);
-    setError('');
-    try {
-      const payload = {
-        ...form,
-        capacity: parseInt(form.capacity, 10),
-      };
-      await updateEvent(id, payload);
-      history.push('/admin/events');
-    } catch (err) {
-      setError(err.message || 'Failed to update event');
-    } finally {
-      setSaving(false);
-    }
+    saveMutation.mutate({
+      ...form,
+      capacity: parseInt(form.capacity, 10),
+    });
   };
 
-  if (loading) {
+  if (loadingEvent || loadingCats) {
     return (
       <Box display="flex" justifyContent="center" mt={8}>
         <CircularProgress />
@@ -95,15 +99,32 @@ export default function EditEventPage() {
     );
   }
 
+  if (isEventError) {
+    return (
+      <Container maxWidth="sm" sx={{ mt: 4 }}>
+        <Alert severity="error">Error loading event: {eventError.message}</Alert>
+      </Container>
+    );
+  }
+
+  if (isCatsError) {
+    return (
+      <Container maxWidth="sm" sx={{ mt: 4 }}>
+        <Alert severity="error">Error loading categories: {catsError.message}</Alert>
+      </Container>
+    );
+  }
+
+  // ————————————————————————————————————————————————
   return (
     <Container maxWidth="sm" sx={{ mt: 4, mb: 4 }}>
       <Typography variant="h5" gutterBottom>
         Edit Event
       </Typography>
 
-      {error && (
+      {saveMutation.isError && (
         <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
+          {saveMutation.error.message || 'Failed to update event'}
         </Alert>
       )}
 
@@ -187,14 +208,14 @@ export default function EditEventPage() {
           <Button
             type="submit"
             variant="contained"
-            disabled={saving}
-            startIcon={saving && <CircularProgress size={20} />}
+            disabled={saveMutation.isLoading}
+            startIcon={saveMutation.isLoading && <CircularProgress size={20} />}
           >
-            {saving ? 'Saving…' : 'Save Changes'}
+            {saveMutation.isLoading ? 'Saving…' : 'Save Changes'}
           </Button>
           <Button
             variant="outlined"
-            onClick={() => history.push('/admin/events')}
+            onClick={() => navigate('/admin/events', { replace: true })}
           >
             Cancel
           </Button>

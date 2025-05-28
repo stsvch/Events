@@ -83,5 +83,14 @@ namespace Events.Domain.Entities
 
             _images.Add(new EventImage(Id, url, DateTimeOffset.UtcNow));
         }
+
+        public void RemoveImage(Guid imageId)
+        {
+            var existing = _images.FirstOrDefault(i => i.Id == imageId);
+            if (existing == null)
+                throw new EntityNotFoundException(imageId);
+
+            _images.Remove(existing);
+        }
     }
 }

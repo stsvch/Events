@@ -1,18 +1,29 @@
 // src/components/Layout.jsx
 import React, { useState } from 'react';
-import { AppBar, Toolbar, IconButton, Typography, Button, Drawer, List, ListItem, ListItemText, Box } from '@mui/material';
+import {
+  AppBar,
+  Toolbar,
+  IconButton,
+  Typography,
+  Button,
+  Drawer,
+  List,
+  ListItem,
+  ListItemText,
+  Box
+} from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
-import { Link, useHistory } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 export default function Layout({ children }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const { user, logout } = useAuth();
-  const history = useHistory();
+  const { user, accessToken, logout } = useAuth();
+  const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout();           // вызывает контекстный logout
-    // history.push('/login'); — уже есть редирект внутри logout
+    logout();
+    navigate('/login', { replace: true });
   };
 
   const navItems = [
@@ -25,31 +36,55 @@ export default function Layout({ children }) {
     <>
       <AppBar position="static">
         <Toolbar>
-          <IconButton edge="start" color="inherit" onClick={() => setDrawerOpen(o => !o)} sx={{ mr: 2 }}>
+          <IconButton
+            edge="start"
+            color="inherit"
+            onClick={() => setDrawerOpen(o => !o)}
+            sx={{ mr: 2 }}
+          >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>EventApp</Typography>
 
-          {user
-            ? <Button color="inherit" onClick={handleLogout}>Logout</Button>
-            : <>
-                <Button color="inherit" component={Link} to="/login">Login</Button>
-                <Button color="inherit" component={Link} to="/register">Register</Button>
-              </>
-          }
+          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+            EventApp
+          </Typography>
+
+          {accessToken ? (
+            <Button color="inherit" onClick={handleLogout}>
+              Logout
+            </Button>
+          ) : (
+            <>
+              <Button color="inherit" component={Link} to="/login">
+                Login
+              </Button>
+              <Button color="inherit" component={Link} to="/register">
+                Register
+              </Button>
+            </>
+          )}
         </Toolbar>
       </AppBar>
 
       <Drawer open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-        <Box sx={{ width: 240 }} role="presentation" onClick={() => setDrawerOpen(false)}>
+        <Box
+          sx={{ width: 240 }}
+          role="presentation"
+          onClick={() => setDrawerOpen(false)}
+        >
           <List>
-            {navItems.map(item =>
-              (!item.role || user?.roles.includes(item.role)) && (
-                <ListItem button key={item.text} component={Link} to={item.path}>
+            {navItems.map(item => (
+              (!item.role || user?.roles?.includes(item.role)) && (
+                <ListItem
+                  button
+                  key={item.text}
+                  component={Link}
+                  to={item.path}
+                >
                   <ListItemText primary={item.text} />
                 </ListItem>
               )
-            )}
+            ))}
           </List>
         </Box>
       </Drawer>

@@ -6,23 +6,18 @@ using MediatR;
 
 namespace Events.Application.Handlers
 {
-    public class UnregisterParticipantCommandHandler
-        : IRequestHandler<UnregisterParticipantCommand, Unit>
+    public class UnregisterParticipantCommandHandler : IRequestHandler<UnregisterParticipantCommand, Unit>
     {
         private readonly IEventRepository _eventRepo;
         private readonly IParticipantRepository _partRepo;
 
-        public UnregisterParticipantCommandHandler(
-            IEventRepository eventRepo,
-            IParticipantRepository partRepo)
+        public UnregisterParticipantCommandHandler(IEventRepository eventRepo, IParticipantRepository partRepo)
         {
             _eventRepo = eventRepo;
             _partRepo = partRepo;
         }
 
-        public async Task<Unit> Handle(
-            UnregisterParticipantCommand command,
-            CancellationToken cancellationToken)
+        public async Task<Unit> Handle( UnregisterParticipantCommand command,CancellationToken cancellationToken)
         {
             var evt = await _eventRepo
                 .GetByIdAsync(command.EventId, cancellationToken)

@@ -16,9 +16,6 @@ namespace Events.Application.DTOs
         public Guid CategoryId { get; set; }
         public int Capacity { get; set; }
         public int ParticipantCount { get; set; }
-        public List<ParticipantDto> Participants { get; set; } = new();
-
         public List<EventImageDto> Images { get; set; } = new();
     }
-
 }

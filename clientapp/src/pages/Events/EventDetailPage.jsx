@@ -1,151 +1,118 @@
-// src/pages/Events/EventDetailPage.jsx
-import React, { useState, useEffect } from 'react';
-import { useParams, useHistory, Link } from 'react-router-dom';
+import React from 'react';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
-  Container,
-  Box,
-  Typography,
-  Button,
-  CircularProgress,
-  Alert,
-  CardMedia,
-  Grid,
+  Container, Box, Typography, Button,
+  CircularProgress, Alert, CardMedia,
+  List, ListItem, ListItemText
 } from '@mui/material';
-import Slider from "react-slick";
-import "slick-carousel/slick/slick.css";
-import "slick-carousel/slick/slick-theme.css";
+import Slider from 'react-slick';
 
-import { getEventById, uploadEventImage, deleteEvent } from '../../api/events';
+import { useAuth } from '../../context/AuthContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-  getParticipants,
-  registerParticipant,
-  unregisterParticipant,
+  getEventById, deleteEvent, uploadEventImage
+} from '../../api/events';
+import {
+  getParticipants, registerParticipant,
+  unregisterParticipant, isRegistered as checkRegistration
 } from '../../api/participants';
-import { useAuth } from '../../hooks/useAuth';
+import { getEventImages } from '../../api/images';
+
+const PLACEHOLDER_IMAGE = '/images/placeholder.png';
 
 export default function EventDetailPage() {
   const { id } = useParams();
-  const history = useHistory();
+  const navigate = useNavigate();
   const { user, accessToken } = useAuth();
+  const isAdmin = user?.roles?.includes('Admin') ?? false;
+  const queryClient = useQueryClient();
 
-  const [event, setEvent] = useState(null);
-  const [participants, setParticipants] = useState([]);
-  const [isRegistered, setIsRegistered] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  // 1) основной запрос события
+  const {
+    data: event,
+    isLoading: loadingEvent,
+    error: eventError
+  } = useQuery({
+    queryKey: ['event', id],
+    queryFn: () => getEventById(id).then(res => res.data),
+  });
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  // 2) запрос списка картинок
+  const {
+    data: imageUrls = [],
+    isLoading: loadingImages,
+    error: imagesError
+  } = useQuery({
+    queryKey: ['eventImages', id],
+    queryFn: () => getEventImages(id),
+    enabled: !!event,
+    staleTime: 5 * 60_000,
+  });
 
-  // Settings for react-slick carousel
-  const carouselSettings = {
-    dots: true,
-    infinite: true,
-    speed: 500,
-    slidesToShow: 1,
-    slidesToScroll: 1,
-  };
+  // 3) проверка, зарегистрирован ли текущий пользователь
+  const {
+    data: registration,
+    isLoading: loadingRegistration,
+    error: registrationError
+  } = useQuery({
+    queryKey: ['isRegistered', id],
+    queryFn: () => checkRegistration(id).then(res => res.data),
+    enabled: !!user && !isAdmin,
+  });
 
-  // Load event & participants
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const [{ data: evt }, { data: parts }] = await Promise.all([
-          getEventById(id),
-          getParticipants(id),
-        ]);
-        setEvent(evt);
-        setParticipants(parts);
-        setIsRegistered(parts.some(p => p.email === user?.email));
-      } catch (err) {
-        setError(err.message || 'Failed to load event');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, [id, user]);
+  const registerMutation = useMutation({
+    mutationFn: () => registerParticipant({ eventId: id }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['isRegistered', id]);
+      queryClient.invalidateQueries(['participants', id]);
+    },
+  });
 
-  // Handlers
-  const handleRegister = async () => {
-    try {
-      await registerParticipant({ eventId: id });
-      setIsRegistered(true);
-      const { data: parts } = await getParticipants(id);
-      setParticipants(parts);
-    } catch (err) {
-      alert(err.message || 'Registration failed');
-    }
-  };
+  const unregisterMutation = useMutation({
+    mutationFn: () => unregisterParticipant(registration.participantId, id),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['isRegistered', id]);
+      queryClient.invalidateQueries(['participants', id]);
+    },
+  });
 
-  const handleUnregister = async () => {
-    try {
-      const me = participants.find(p => p.email === user.email);
-      await unregisterParticipant(me.id, id);
-      setIsRegistered(false);
-      const { data: parts } = await getParticipants(id);
-      setParticipants(parts);
-    } catch (err) {
-      alert(err.message || 'Unregistration failed');
-    }
-  };
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteEvent(id),
+    onSuccess: () => navigate('/events', { replace: true }),
+  });
 
-  const handleDelete = async () => {
-    if (!window.confirm('Are you sure you want to delete this event?')) return;
-    try {
-      await deleteEvent(id);
-      history.push('/events');
-    } catch (err) {
-      alert(err.message || 'Delete failed');
-    }
-  };
+  const uploadMutation = useMutation({
+    mutationFn: file => uploadEventImage(id, { file }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['eventImages', id]);
+      queryClient.invalidateQueries(['event', id]);
+    },
+  });
 
-  const handleImageUpload = async e => {
-    const file = e.target.files[0];
-    if (!file) return;
+  // загрузка...
+  if (loadingEvent) return (
+    <Box display="flex" justifyContent="center" mt={8}>
+      <CircularProgress />
+    </Box>
+  );
+  if (eventError) return (
+    <Container maxWidth="sm" sx={{ mt: 4 }}>
+      <Alert severity="error">Error loading event: {eventError.message}</Alert>
+    </Container>
+  );
+  if (!event) return (
+    <Box textAlign="center" mt={8}>
+      <Typography>Event not found.</Typography>
+      <Button component={Link} to="/events" sx={{ mt: 2 }}>
+        Back to events
+      </Button>
+    </Box>
+  );
 
-    setUploading(true);
-    try {
-      await uploadEventImage(id, file);
-      // Refetch event to get updated images array
-      const { data: refreshed } = await getEventById(id);
-      setEvent(refreshed);
-    } catch (err) {
-      alert(err.response?.data || 'Image upload failed');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  if (loading) {
-    return (
-      <Box display="flex" justifyContent="center" mt={8}>
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container maxWidth="sm" sx={{ mt: 4 }}>
-        <Alert severity="error">{error}</Alert>
-      </Container>
-    );
-  }
-
-  if (!event) {
-    return (
-      <Box textAlign="center" mt={8}>
-        <Typography>Event not found.</Typography>
-        <Button component={Link} to="/events" sx={{ mt: 2 }}>
-          Back to Events
-        </Button>
-      </Box>
-    );
-  }
-
-  const isAdmin = user?.roles?.includes('Admin');
+  // готовим массив картинок для слайдера
+  const images = !loadingImages && imageUrls.length
+    ? imageUrls.map(url => ({ id: url, url }))
+    : [{ id: 'placeholder', url: PLACEHOLDER_IMAGE }];
 
   return (
     <Container maxWidth="md" sx={{ mt: 4 }}>
@@ -153,62 +120,62 @@ export default function EventDetailPage() {
         {event.title}
       </Typography>
 
-      {/* Carousel of images */}
-      {event.images?.length > 0 && (
-        <Box mb={3}>
-          <Slider {...carouselSettings}>
-            {event.images.map(img => (
-              <Box key={img.id} sx={{ px: 1 }}>
-                <CardMedia
-                  component="img"
-                  image={img.url}
-                  alt={event.title}
-                  height="400"
-                  sx={{ borderRadius: 1 }}
-                />
-              </Box>
+      {/* Слайдер картинок */}
+      <Box mb={3}>
+        {images.length > 1 ? (
+          <Slider dots infinite speed={500} slidesToShow={1} slidesToScroll={1}>
+            {images.map(img => (
+              <CardMedia
+                key={img.id}
+                component="img"
+                image={img.url}
+                alt={event.title}
+                height="400"
+                sx={{ borderRadius: 1, mb: 2 }}
+              />
             ))}
           </Slider>
-        </Box>
-      )}
+        ) : (
+          <CardMedia
+            component="img"
+            image={images[0].url}
+            alt={event.title}
+            height="400"
+            sx={{ borderRadius: 1 }}
+          />
+        )}
+      </Box>
 
+      {/* Описание */}
       <Typography variant="subtitle1" color="textSecondary" gutterBottom>
         {new Date(event.date).toLocaleString()} — {event.venue}
       </Typography>
-
       <Typography variant="body1" paragraph>
         {event.description}
       </Typography>
 
-      <Grid container spacing={2} mb={3}>
-        <Grid item>
-          <Typography variant="body2">
-            <strong>Capacity:</strong> {event.capacity}
-          </Typography>
-        </Grid>
-        <Grid item>
-          <Typography variant="body2">
-            <strong>Registered:</strong> {participants.length}
-          </Typography>
-        </Grid>
-      </Grid>
-
-      {/* User actions */}
-      {accessToken && !isAdmin && (
+      {/* Регистрация */}
+      {!isAdmin && accessToken && (
         <Box mb={3}>
-          {isRegistered ? (
+          {loadingRegistration ? (
+            <CircularProgress size={24} />
+          ) : registrationError ? (
+            <Alert severity="error">Error: {registrationError.message}</Alert>
+          ) : registration.isRegistered ? (
             <Button
               variant="contained"
               color="warning"
-              onClick={handleUnregister}
+              onClick={() => unregisterMutation.mutate()}
+              disabled={unregisterMutation.isLoading}
             >
-              Unregister
+              Cancel Registration
             </Button>
           ) : (
             <Button
               variant="contained"
               color="primary"
-              onClick={handleRegister}
+              onClick={() => registerMutation.mutate()}
+              disabled={registerMutation.isLoading}
             >
               Register
             </Button>
@@ -216,33 +183,71 @@ export default function EventDetailPage() {
         </Box>
       )}
 
-      {/* Admin controls */}
+      {/* Список участников (доступен всем) */}
+      <Box mb={3}>
+        <Typography variant="h6">Participants</Typography>
+        <ParticipantsList eventId={id} />
+      </Box>
+
+      {/* Админ-панель */}
       {isAdmin && (
-        <Box mb={3} display="flex" gap={1}>
-          <Button
-            variant="outlined"
-            onClick={() => history.push(`/admin/events/edit/${id}`)}
-          >
-            Edit
-          </Button>
-          <Button variant="outlined" color="error" onClick={handleDelete}>
-            Delete
-          </Button>
-          <Button variant="outlined" component="label" disabled={uploading}>
-            {uploading ? 'Uploading…' : 'Upload Image'}
-            <input
-              type="file"
-              hidden
-              accept="image/*"
-              onChange={handleImageUpload}
-            />
-          </Button>
+        <Box mb={3}>
+          <Box display="flex" gap={1} mb={2}>
+            <Button
+              variant="outlined"
+              onClick={() => navigate(`/admin/events/edit/${id}`)}
+            >
+              Edit
+            </Button>
+            <Button
+              variant="outlined"
+              color="error"
+              onClick={() => deleteMutation.mutate()}
+              disabled={deleteMutation.isLoading}
+            >
+              Delete
+            </Button>
+            <Button
+              variant="outlined"
+              component="label"
+              disabled={uploadMutation.isLoading}
+            >
+              {uploadMutation.isLoading ? 'Uploading…' : 'Upload Photo'}
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={e => uploadMutation.mutate(e.target.files[0])}
+              />
+            </Button>
+          </Box>
         </Box>
       )}
 
       <Button component={Link} to="/events" variant="text">
-        Back to Events
+        Back to events
       </Button>
     </Container>
+  );
+}
+
+// Вынесли список участников в отдельный компонент для чистоты кода
+function ParticipantsList({ eventId }) {
+  const { data: participants = [], isLoading } = useQuery({
+    queryKey: ['participants', eventId],
+    queryFn: () => getParticipants(eventId).then(res => res.data),
+  });
+
+  if (isLoading) return <CircularProgress size={24} />;
+  if (!participants.length) return <Typography>No participants yet.</Typography>;
+
+  return (
+    <List>
+      {participants.map(p => (
+        <ListItem key={p.id} divider>
+          <ListItemText primary={p.fullName || p.email} secondary={p.email} />
+        </ListItem>
+      ))}
+    </List>
   );
 }

@@ -36,7 +36,7 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddCors(opts =>
   opts.AddDefaultPolicy(p =>
-    p.WithOrigins("http://localhost:3000")  // адрес вашего React-клиента
+    p.WithOrigins("http://localhost:3000")  // адрес React-клиента
      .AllowAnyHeader()
      .AllowAnyMethod()
      .AllowCredentials()                     // <Ч включаем Allow-Credentials
