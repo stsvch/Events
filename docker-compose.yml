@@ -1,0 +1,50 @@
+version: '3.9'
+
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: events-mssql
+    environment:
+      SA_PASSWORD: "password123_QWERTY"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    volumes:
+      - db_data:/var/opt/mssql
+    restart: always
+
+  backend:
+    build:
+      context: ./src
+      dockerfile: WebApi/Dockerfile
+    container_name: events-backend
+    depends_on:
+      - db
+    environment:
+      ASPNETCORE_URLS: "https://+:7188;http://+:5144"
+      ASPNETCORE_Kestrel__Certificates__Default__Password: "YourDevCertPassword1gbdcbdshcbhjdsjc222"
+      ASPNETCORE_Kestrel__Certificates__Default__Path: "/https/aspnetapp.pfx"
+      ConnectionStrings__DefaultConnection: "Server=db;Database=EventsDb;User=sa;Password=password123_QWERTY;TrustServerCertificate=True;"
+      ConnectionStrings__IdentityConnection: "Server=db;Database=EventsIdentityDb;User=sa;Password=password123_QWERTY;TrustServerCertificate=True;"
+
+
+    ports:
+      - "5144:5144"
+      - "7188:7188"
+    volumes:
+      - ./certs:/https:ro
+
+  frontend:
+    build:
+      context: ./clientapp
+      dockerfile: Dockerfile
+    container_name: events-frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+    environment:
+      - REACT_APP_API_URL=https://localhost:7188/api
+
+volumes:
+  db_data:

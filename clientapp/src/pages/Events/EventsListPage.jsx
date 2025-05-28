@@ -37,7 +37,6 @@ export default function EventsListPage() {
   const [categoryId, setCategoryId] = useState('');
   const [showFilters, setShowFilters] = useState(false);
 
-  // дебаунс для поиска
   useEffect(() => {
     const t = setTimeout(() => {
       setDebounced(searchTerm.trim());
@@ -46,13 +45,11 @@ export default function EventsListPage() {
     return () => clearTimeout(t);
   }, [searchTerm]);
 
-  // категории
   const { data: categories = [], isLoading: loadingCats, error: catsError } = useQuery({
     queryKey: ['categories'],
     queryFn: () => getCategories().then(res => res.data),
   });
 
-  // параметры запроса событий
   const fetchParams = useMemo(() => ({
     pageNumber: page,
     pageSize: PAGE_SIZE,
@@ -79,7 +76,6 @@ export default function EventsListPage() {
   const totalCount = eventsData?.totalCount || 0;
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
-  // тянем первые картинки
   const firstImageQueries = useQueries({
     queries: events.map(evt => ({
       queryKey: ['event', evt.id, 'firstImage'],
@@ -102,7 +98,6 @@ export default function EventsListPage() {
     return map;
   }, [events, firstImageQueries]);
 
-  // ручки
   const handleClear = () => {
     setCategoryId('');
     setVenueFilter('');
@@ -119,7 +114,6 @@ export default function EventsListPage() {
     <Box p={4}>
       <Typography variant="h4" mb={3}>Events</Typography>
 
-      {/* Строка поиска + кнопка фильтров */}
       <Box display="flex" alignItems="center" gap={1} mb={2}>
         <TextField
           fullWidth
@@ -201,7 +195,6 @@ export default function EventsListPage() {
         </Paper>
       </Collapse>
 
-      {/* Список или загрузка/ошибка */}
       {loadingEvents ? (
         <Box display="flex" justifyContent="center" mt={4}>
           <CircularProgress />
@@ -225,7 +218,6 @@ export default function EventsListPage() {
         <EventsGrid events={events} imageMap={firstImageMap} />
       )}
 
-      {/* Пагинация */}
       {!loadingEvents && !eventsError && events.length > 0 && (
         <Box display="flex" justifyContent="space-between" alignItems="center" mt={4}>
           <Button

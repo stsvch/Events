@@ -1,9 +1,11 @@
 using Events.Application.Extensions;
 using Events.Application.Interfaces;
 using Events.Infrastructure.Extensions;
+using Events.Infrastructure.Persistence;
 using Events.Infrastructure.Services.Images;
 using Events.WebApi;
 using Events.WebApi.Middleware;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.OpenApi.Models;
 
@@ -37,6 +39,19 @@ builder.Services.AddCors(opts =>
 
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+
+    var db = services.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+
+    var identityDb = services.GetRequiredService<IdentityDbContext>();
+    identityDb.Database.Migrate();
+
+    AdminSeeder.SeedAsync(services).GetAwaiter().GetResult();
+}
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 

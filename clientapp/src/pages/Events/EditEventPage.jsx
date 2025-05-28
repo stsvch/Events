@@ -87,7 +87,6 @@ export default function EditEventPage() {
     saveMutation.mutate({ ...form, capacity: parseInt(form.capacity, 10) });
   };
 
-    // Build imagesData, supporting both camelCase and PascalCase DTOs
   const imagesData = !loadingImages && imagesList.length
     ? imagesList.map(img => ({
         id: img.id ?? img.Id,
