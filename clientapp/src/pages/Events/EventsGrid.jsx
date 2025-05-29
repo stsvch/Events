@@ -30,9 +30,6 @@ export default function EventsGrid({ events, imageMap }) {
             },
           }}
         >
-          <EventCard evt={evt} imageUrl={imageMap[evt.id]}>
-            <Button size="small" component={Link} to={`/events/${evt.id}`}>Learn More</Button>
-          </EventCard>
         </Grid>
       ))}
     </Grid>
