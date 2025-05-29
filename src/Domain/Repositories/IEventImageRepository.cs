@@ -9,8 +9,6 @@ namespace Events.Domain.Repositories
 {
     public interface IEventImageRepository: IRepository<EventImage>
     {
-        Task DeleteByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default);
-
         Task<IEnumerable<EventImage>> ListByEventIdAsync(Guid eventId, CancellationToken cancellationToken = default);
     }
 }

@@ -23,16 +23,5 @@ namespace Events.Infrastructure.Repositories
                                  .ToListAsync(cancellationToken);
         }
 
-        public async Task DeleteByEventIdAsync(
-            Guid eventId,
-            CancellationToken cancellationToken = default)
-        {
-            var imgs = await ListByEventIdAsync(eventId, cancellationToken);
-            if (!imgs.Any())
-                return;
-
-            _context.Set<EventImage>().RemoveRange(imgs);
-            await _context.SaveChangesAsync(cancellationToken);
-        }
     }
 }

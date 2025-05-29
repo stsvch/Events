@@ -28,25 +28,6 @@ namespace Events.Infrastructure.Repositories
                 .FirstOrDefaultAsync(e => e.Id == id, ct);
         }
 
-        public async Task<Event?> GetByTitleAsync(string title, CancellationToken cancellationToken = default)
-        {
-            return await _context.Events
-                                 .AsNoTracking()
-                                 .FirstOrDefaultAsync(e => e.Title.Equals(title, StringComparison.OrdinalIgnoreCase), cancellationToken);
-        }
-
-        public async Task<Event?> GetByTitleWithDetailsAsync(string title, CancellationToken cancellationToken = default)
-        {
-            return await _context.Events
-                                 .AsNoTracking()
-                                 .Include(e => e.Participants)
-                                     .ThenInclude(ep => ep.Participant)
-                                 .Include(e => e.Images)
-                                 .FirstOrDefaultAsync(
-                                     e => e.Title.Equals(title, StringComparison.OrdinalIgnoreCase),
-                                     cancellationToken);
-        }
-
         public async Task<PagedList<Event>> ListAsync(
             ISpecification<Event> spec,
             int pageNumber,
@@ -61,8 +42,7 @@ namespace Events.Infrastructure.Repositories
             {
                 query = query
                     .Include(e => e.Participants)
-                        .ThenInclude(ep => ep.Participant)
-                    .Include(e => e.Images);
+                        .ThenInclude(ep => ep.Participant);
             }
 
             query = query.OrderBy(e => e.Date);
@@ -74,45 +54,6 @@ namespace Events.Infrastructure.Repositories
                 .ToListAsync(ct);
 
             return new PagedList<Event>(items, total);
-        }
-
-        public async Task<IEnumerable<Event>> SearchByTitleAsync(
-            string searchTerm,
-            int maxResults = 10,
-            CancellationToken cancellationToken = default)
-        {
-            if (string.IsNullOrWhiteSpace(searchTerm))
-                return Array.Empty<Event>();
-
-            var lower = searchTerm.Trim().ToLower();
-
-            return await _context.Events
-                                 .AsNoTracking()
-                                 .Where(e => e.Title.ToLower().Contains(lower))
-                                 .OrderBy(e => e.Title)
-                                 .Take(maxResults)
-                                 .ToListAsync(cancellationToken);
-        }
-
-        public async Task<IEnumerable<Event>> SearchByTitleWithDetailsAsync(
-            string searchTerm,
-            int maxResults = 10,
-            CancellationToken cancellationToken = default)
-        {
-            if (string.IsNullOrWhiteSpace(searchTerm))
-                return Array.Empty<Event>();
-
-            var lower = searchTerm.Trim().ToLower();
-
-            return await _context.Events
-                                 .AsNoTracking()
-                                 .Where(e => e.Title.ToLower().Contains(lower))
-                                 .Include(e => e.Participants)
-                                     .ThenInclude(ep => ep.Participant)
-                                 .Include(e => e.Images)
-                                 .OrderBy(e => e.Title)
-                                 .Take(maxResults)
-                                 .ToListAsync(cancellationToken);
         }
     }
 

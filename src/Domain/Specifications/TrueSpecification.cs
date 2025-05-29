@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Events.Domain.Specifications
 {
-    public class TrueSpecification<T> : Specification<T>
+    internal class TrueSpecification<T> : Specification<T>
     {
         public override Expression<Func<T, bool>> Criteria => x => true;
     }

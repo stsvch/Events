@@ -13,22 +13,5 @@ namespace Events.Domain.Repositories
            bool includeDetails = false,
            CancellationToken ct = default);
         Task<Event?> GetByIdWithDetailsAsync(Guid id, CancellationToken ct = default);
-        Task<Event?> GetByTitleAsync(
-            string title,
-            CancellationToken cancellationToken = default);
-
-        Task<Event?> GetByTitleWithDetailsAsync(
-            string title,
-            CancellationToken cancellationToken = default);
-
-        Task<IEnumerable<Event>> SearchByTitleAsync(
-            string searchTerm,
-            int maxResults = 10,
-            CancellationToken cancellationToken = default);
-
-        Task<IEnumerable<Event>> SearchByTitleWithDetailsAsync(
-            string searchTerm,
-            int maxResults = 10,
-            CancellationToken cancellationToken = default);
     }
 }

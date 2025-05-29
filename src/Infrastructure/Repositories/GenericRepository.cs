@@ -50,10 +50,6 @@ namespace Events.Infrastructure.Repositories
 
             await _context.SaveChangesAsync(ct);
         }
-
-
-        public async Task<IEnumerable<T>> ListAllAsync(CancellationToken ct = default)
-            => await _context.Set<T>().ToListAsync(ct);
     }
 
 }

@@ -10,12 +10,6 @@ namespace Events.Infrastructure.Repositories
     {
         public ParticipantRepository(AppDbContext ctx) : base(ctx) { }
 
-        public async Task<Participant?> GetByEmailAsync(string email, CancellationToken ct = default)
-        {
-            return await _context.Participants
-                                 .FirstOrDefaultAsync(p => p.Email.Value == email, ct);
-        }
-
         public async Task<bool> IsUserRegisteredAsync(Guid eventId, string userId, CancellationToken ct = default)
         {
             var participant = await _context.Participants

@@ -20,7 +20,7 @@ namespace Events.Application.Handlers
         }
         public async Task<IEnumerable<CategoryDto>> Handle(GetAllCategoriesQuery request, CancellationToken cancellationToken)
         {
-            var categories = await _repo.ListAsync(new TrueSpecification<Category>(),cancellationToken);
+            var categories = await _repo.ListAsync(Specification<Category>.True,cancellationToken);
 
             return _mapper.Map<IEnumerable<CategoryDto>>(categories);
         }

@@ -13,13 +13,11 @@ namespace Events.Infrastructure.Persistence
     {
         public AppDbContext CreateDbContext(string[] args)
         {
-            // 1) Считываем appsettings.json из проекта WebApi (или Infrastructure)
             var config = new ConfigurationBuilder()
-                .SetBasePath(Directory.GetCurrentDirectory())  // при design-time cwd будет путь к Infrastructure
+                .SetBasePath(Directory.GetCurrentDirectory())  
                 .AddJsonFile("appsettings.json", optional: false)
                 .Build();
 
-            // 2) Строим options для контекста
             var builder = new DbContextOptionsBuilder<AppDbContext>();
             var connStr = config.GetConnectionString("DefaultConnection");
             builder.UseSqlServer(connStr);

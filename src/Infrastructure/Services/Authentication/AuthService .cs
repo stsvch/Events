@@ -40,6 +40,7 @@ namespace Events.Infrastructure.Services.Authentication
                 return AuthResult.Failure(errors);
             }
 
+
             var tokens = await _jwtTokenService.GenerateTokensAsync(user.Id);
             return AuthResult.Success(tokens.AccessToken, tokens.RefreshToken, user.Id);
         }
