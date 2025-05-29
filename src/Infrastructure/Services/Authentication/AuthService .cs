@@ -75,7 +75,6 @@ namespace Events.Infrastructure.Services.Authentication
 
         public async Task<LogoutResult> LogoutAsync(string refreshToken)
         {
-            // ищем в контексте IdentityDbContext.RefreshTokens
             var stored = await _db.RefreshTokens
                                   .SingleOrDefaultAsync(t => t.Token == refreshToken);
             if (stored == null)

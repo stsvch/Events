@@ -81,7 +81,6 @@ namespace Events.WebApi.Controllers
             if (!result.Succeeded)
                 return BadRequest(new { result.Errors });
 
-            // 204 No Content — без тела
             return NoContent();
         }
 
