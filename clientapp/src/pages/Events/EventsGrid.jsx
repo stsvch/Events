@@ -30,6 +30,8 @@ export default function EventsGrid({ events, imageMap }) {
             },
           }}
         >
+          <EventCard evt={evt} imageUrl={imageMap[evt.id]}>
+          </EventCard>
         </Grid>
       ))}
     </Grid>

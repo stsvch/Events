@@ -45,14 +45,6 @@ namespace Events.Infrastructure.Extensions
             .AddEntityFrameworkStores<IdentityDbContext>()
             .AddDefaultTokenProviders();
 
-            services.AddIdentityServer()
-                .AddApiAuthorization<ApplicationUser, IdentityDbContext>()
-                .AddOperationalStore(options =>
-                {
-                    options.ConfigureDbContext = builder =>
-                        builder.UseSqlServer(config.GetConnectionString("IdentityConnection"));
-                });
-
             services.Configure<JwtSettings>(config.GetSection("JwtSettings"));
             var jwtSettings = config.GetSection("JwtSettings").Get<JwtSettings>()!;
 
