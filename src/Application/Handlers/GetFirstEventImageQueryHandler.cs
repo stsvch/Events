@@ -20,8 +20,7 @@ namespace Events.Application.Handlers
             GetFirstEventImageQuery request,
             CancellationToken cancellationToken)
         {
-            var evt = await _eventRepo.GetByIdAsync(request.EventId, cancellationToken)
-                      ?? throw new EntityNotFoundException(request.EventId);
+            var evt = await _eventRepo.GetByIdAsync(request.EventId, cancellationToken);
 
             var images = await _imageRepo.ListByEventIdAsync(request.EventId, cancellationToken);
             return images.OrderBy(img => img.UploadedAt)

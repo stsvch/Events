@@ -23,8 +23,7 @@ namespace Events.Application.Handlers
         public async Task<IEnumerable<EventImageDto>> Handle( GetEventImagesQuery request,CancellationToken cancellationToken)
         {
             var evt = await _eventRepo
-                .GetByIdAsync(request.EventId, cancellationToken)
-                ?? throw new EntityNotFoundException(request.EventId);
+                .GetByIdAsync(request.EventId, cancellationToken);
 
             var images = await _imageRepo
                 .ListByEventIdAsync(request.EventId, cancellationToken);

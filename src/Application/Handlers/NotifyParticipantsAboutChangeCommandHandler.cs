@@ -20,10 +20,6 @@ namespace Events.Application.Handlers
         public async Task<Unit> Handle(NotifyParticipantsAboutChangeCommand command, CancellationToken cancellationToken)
         {
             var evt = await _eventRepo.GetByIdWithDetailsAsync(command.EventId, cancellationToken);
-            if (evt == null)
-            {
-                throw new EntityNotFoundException(command.EventId);
-            }
 
             if (!evt.Participants.Any())
             {

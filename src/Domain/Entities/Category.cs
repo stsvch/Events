@@ -10,7 +10,9 @@ namespace Events.Domain.Entities
         public Category(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
+            {
                 throw new InvariantViolationException("Category name is required.");
+            }
             Name = name.Trim();
         }
 

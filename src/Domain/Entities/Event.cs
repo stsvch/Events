@@ -22,11 +22,17 @@ namespace Events.Domain.Entities
         public Event(Guid id, string title, string description, DateTimeOffset date, string venue, Guid categoryId, int capacity)
         {
             if (string.IsNullOrWhiteSpace(title))
+            {
                 throw new InvariantViolationException("Title cannot be empty.");
+            }
             if (string.IsNullOrWhiteSpace(description))
+            {
                 throw new InvariantViolationException("Description cannot be empty.");
+            }
             if (capacity <= 0)
+            {
                 throw new InvariantViolationException("Capacity must be positive.");
+            }
 
             Id = id;
             Title = title;
@@ -40,9 +46,13 @@ namespace Events.Domain.Entities
         public void AddParticipant(Guid participantId)
         {
             if (_participants.Count >= Capacity)
+            {
                 throw new InvariantViolationException("Event is full.");
+            }
             if (_participants.Any(ep => ep.ParticipantId == participantId))
+            {
                 throw new InvariantViolationException("Participant already registered.");
+            }
 
             _participants.Add(new EventParticipant(Id, participantId));
         }
@@ -51,7 +61,9 @@ namespace Events.Domain.Entities
         {
             var existing = _participants.FirstOrDefault(ep => ep.ParticipantId == participantId);
             if (existing == null)
+            {
                 throw new EntityNotFoundException(participantId);
+            }
 
             _participants.Remove(existing);
         }
@@ -61,8 +73,9 @@ namespace Events.Domain.Entities
                                   Guid categoryId, int capacity)
         {
             if (capacity < _participants.Count)
+            {
                 throw new InvariantViolationException("The capacity cannot be less than the current number of participants");
-
+            }
             Title = title;
             Description = description;
             Date = date;

@@ -15,8 +15,6 @@ namespace Events.Application.Handlers
         public async Task<Unit> Handle(UpdateEventCommand command, CancellationToken cancellationToken)
         {
             var existing = await _repo.GetByIdAsync(command.Id, cancellationToken);
-            if (existing == null)
-                throw new EntityNotFoundException(command.Id);
 
             existing.UpdateDetails(
                 command.Title,

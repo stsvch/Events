@@ -21,7 +21,9 @@ namespace Events.Application.Handlers
         {
             var evt = await _eventRepo.GetByIdWithDetailsAsync(command.EventId, cancellationToken);
 
-            var participant = await _partRepo.GetBySpecAsync(new ParticipantByUserIdSpecification(command.UserId), cancellationToken);
+            var participant = await _partRepo.GetBySpecAsync(
+                new ParticipantByUserIdSpecification(command.UserId),
+                cancellationToken);
 
             evt.AddParticipant(participant.Id);
             await _eventRepo.UpdateAsync(evt, cancellationToken);

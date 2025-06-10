@@ -12,7 +12,9 @@ namespace Events.Application.Handlers
         private readonly IParticipantRepository _repository;
         private readonly IMapper _mapper;
 
-        public CheckUserRegistrationHandler(IParticipantRepository repository, IMapper mapper)
+        public CheckUserRegistrationHandler(
+            IParticipantRepository repository, 
+            IMapper mapper)
         {
             _repository = repository;
             _mapper = mapper;

@@ -18,9 +18,9 @@ namespace Events.Application.Handlers
 
         public async Task<Unit> Handle(DeleteEventImageCommand command, CancellationToken cancellationToken)
         {
-            var evt = await _eventRepo.GetByIdAsync(command.EventId,cancellationToken)?? throw new EntityNotFoundException(command.EventId);
+            var evt = await _eventRepo.GetByIdAsync(command.EventId,cancellationToken);
 
-            var img = await _imageRepo.GetByIdAsync(command.ImageId, cancellationToken) ?? throw new EntityNotFoundException(command.ImageId);
+            var img = await _imageRepo.GetByIdAsync(command.ImageId, cancellationToken);
 
             await _imageRepo.DeleteAsync(command.ImageId, cancellationToken);
 

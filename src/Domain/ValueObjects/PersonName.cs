@@ -10,9 +10,13 @@ namespace Events.Domain.ValueObjects
         public PersonName(string firstName, string lastName)
         {
             if (string.IsNullOrWhiteSpace(firstName))
+            {
                 throw new InvariantViolationException("First name cannot be empty.");
+            }
             if (string.IsNullOrWhiteSpace(lastName))
+            {
                 throw new InvariantViolationException("Last name cannot be empty.");
+            }
 
             var trimmedFirst = firstName.Trim();
             var trimmedLast = lastName.Trim();

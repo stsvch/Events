@@ -22,7 +22,9 @@ namespace Events.Application.Handlers
 
         public async Task<IEnumerable<EventDto>> Handle( GetEventsByParticipantQuery query, CancellationToken cancellationToken)
         {
-            var participant = await _partRepo.GetBySpecAsync(new ParticipantByUserIdSpecification(query.UserId), cancellationToken);
+            var participant = await _partRepo.GetBySpecAsync(
+                new ParticipantByUserIdSpecification(query.UserId),
+                cancellationToken);
             var spec = new EventByParticipantSpecification(participant.Id);
             var events = await _eventRepo.ListAsync(spec, cancellationToken);
             return _mapper.Map<IEnumerable<EventDto>>(events);

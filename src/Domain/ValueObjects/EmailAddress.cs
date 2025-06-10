@@ -12,8 +12,9 @@ namespace Events.Domain.ValueObjects
         public EmailAddress(string value)
         {
             if (string.IsNullOrWhiteSpace(value))
+            {
                 throw new InvariantViolationException("Email address cannot be empty.");
-
+            }
             var trimmed = value.Trim();
 
             try

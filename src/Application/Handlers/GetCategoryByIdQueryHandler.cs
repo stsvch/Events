@@ -12,17 +12,19 @@ namespace Events.Application.Handlers
         private readonly ICategoryRepository _repo;
         private readonly IMapper _mapper;
 
-        public GetCategoryByIdQueryHandler( ICategoryRepository repo, IMapper mapper)
+        public GetCategoryByIdQueryHandler( 
+            ICategoryRepository repo,
+            IMapper mapper)
         {
             _repo = repo;
             _mapper = mapper;
         }
 
-        public async Task<CategoryDto> Handle(GetCategoryByIdQuery request, CancellationToken cancellationToken)
+        public async Task<CategoryDto> Handle(
+            GetCategoryByIdQuery request, 
+            CancellationToken cancellationToken)
         {
             var entity = await _repo.GetByIdAsync(request.Id, cancellationToken);
-            if (entity == null)
-                throw new EntityNotFoundException(request.Id);
             return _mapper.Map<CategoryDto>(entity);
         }
     }

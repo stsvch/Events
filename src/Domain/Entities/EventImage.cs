@@ -14,8 +14,9 @@ namespace Events.Domain.Entities
         public EventImage(Guid eventId, string url, DateTimeOffset uploadedAt)
         {
             if (string.IsNullOrWhiteSpace(url))
+            {
                 throw new InvariantViolationException("URL cannot be empty.");
-
+            }
             Id = Guid.NewGuid();
             EventId = eventId;
             Url = url;

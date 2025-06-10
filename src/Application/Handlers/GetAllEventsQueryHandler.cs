@@ -21,7 +21,11 @@ namespace Events.Application.Handlers
 
         public async Task<PagedResultDto<EventDto>> Handle(GetAllEventsQuery query, CancellationToken cancellationToken)
         {
-            var paged = await _repo.ListAsync( Specification<Event>.True, query.PageNumber,query.PageSize,includeDetails: true,cancellationToken);
+            var paged = await _repo.ListAsync( 
+                Specification<Event>.True, 
+                query.PageNumber,query.PageSize,
+                includeDetails: true,
+                cancellationToken);
 
             return new PagedResultDto<EventDto>
             {

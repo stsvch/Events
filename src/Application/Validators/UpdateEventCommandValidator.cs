@@ -1,11 +1,14 @@
 ﻿using Events.Application.Commands;
+using Events.Domain.Repositories;
 using FluentValidation;
 
 namespace Events.Application.Validators
 {
     public class UpdateEventCommandValidator : AbstractValidator<UpdateEventCommand>
     {
-        public UpdateEventCommandValidator()
+        public UpdateEventCommandValidator(
+            IEventRepository eventRepo,
+            ICategoryRepository categoryRepo)
         {
             Include(new HasIdValidator<UpdateEventCommand>());
 
@@ -24,6 +27,12 @@ namespace Events.Application.Validators
 
             RuleFor(x => x.Capacity)
                 .GreaterThan(0).WithMessage("Capacity must be greater than zero.");
+
+            RuleFor(x => x.Id)
+                .MustAsync(async (id, ct) =>
+                    await eventRepo.GetByIdAsync(id, ct) != null
+                )
+                .WithMessage("Event with Id '{PropertyValue}' was not found.");
         }
     }
 }
