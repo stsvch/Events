@@ -22,9 +22,6 @@ namespace Events.Application.Handlers
 
             var img = await _imageRepo.GetByIdAsync(command.ImageId, cancellationToken) ?? throw new EntityNotFoundException(command.ImageId);
 
-            if (img.EventId != command.EventId)
-                throw new InvariantViolationException($"Image {command.ImageId} does not belong to Event {command.EventId}.");
-
             await _imageRepo.DeleteAsync(command.ImageId, cancellationToken);
 
             return Unit.Value;

@@ -19,13 +19,9 @@ namespace Events.Application.Handlers
 
         public async Task<Unit> Handle(RegisterParticipantCommand command, CancellationToken cancellationToken)
         {
-            var evt = await _eventRepo.GetByIdWithDetailsAsync(command.EventId, cancellationToken)
-                ?? throw new EntityNotFoundException(command.EventId);
+            var evt = await _eventRepo.GetByIdWithDetailsAsync(command.EventId, cancellationToken);
 
             var participant = await _partRepo.GetBySpecAsync(new ParticipantByUserIdSpecification(command.UserId), cancellationToken);
-
-            if (evt.Participants.Any(ep => ep.ParticipantId == participant.Id))
-                throw new ForbiddenException("You are already registered for this event.");
 
             evt.AddParticipant(participant.Id);
             await _eventRepo.UpdateAsync(evt, cancellationToken);

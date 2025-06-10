@@ -24,16 +24,11 @@ namespace Events.Application.Handlers
         public async Task<Unit> Handle(UnregisterParticipantCommand command, CancellationToken cancellationToken)
         {
             var evt = await _eventRepo
-                .GetByIdWithDetailsAsync(command.EventId, cancellationToken)
-                ?? throw new EntityNotFoundException(command.EventId);
+                .GetByIdWithDetailsAsync(command.EventId, cancellationToken);
 
             var participant = await _partRepo
-                .GetBySpecAsync(new ParticipantByUserIdSpecification(command.UserId), cancellationToken)
-                ?? throw new EntityNotFoundException();
+                .GetBySpecAsync(new ParticipantByUserIdSpecification(command.UserId), cancellationToken);
 
-            var ep = evt.Participants.SingleOrDefault(x => x.ParticipantId == participant.Id);
-            if (ep == null)
-                throw new ForbiddenException("You are not registered for this event.");
 
             evt.RemoveParticipant(participant.Id);
             await _eventRepo.UpdateAsync(evt, cancellationToken);

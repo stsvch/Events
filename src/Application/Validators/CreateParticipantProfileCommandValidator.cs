@@ -27,9 +27,7 @@ namespace Events.Application.Validators
             RuleFor(x => x.DateOfBirth)
                 .NotEmpty().WithMessage("Date of birth is required.")
                 .LessThan(DateTimeOffset.UtcNow)
-                    .WithMessage("Date of birth must be in the past.")
-                .Must(dob => dob <= DateTimeOffset.UtcNow.AddYears(-18))
-                    .WithMessage("Participant must be at least 18 years old.");
+                    .WithMessage("Date of birth must be in the past.");
         }
     }
 }
