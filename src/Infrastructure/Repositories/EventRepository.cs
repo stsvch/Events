@@ -22,6 +22,7 @@ namespace Events.Infrastructure.Repositories
         public async Task<Event?> GetByIdWithDetailsAsync(Guid id, CancellationToken ct = default)
         {
             return await _context.Events
+                .AsNoTracking()
                 .Include(e => e.Participants)              
                     .ThenInclude(ep => ep.Participant)    
                 .Include(e => e.Images)                   

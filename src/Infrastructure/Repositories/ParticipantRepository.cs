@@ -13,6 +13,7 @@ namespace Events.Infrastructure.Repositories
         public async Task<bool> IsUserRegisteredAsync(Guid eventId, string userId, CancellationToken ct = default)
         {
             var participant = await _context.Participants
+                                            .AsNoTracking()
                                             .FirstOrDefaultAsync(p => p.UserId == userId, ct);
 
             if (participant == null)
@@ -26,7 +27,7 @@ namespace Events.Infrastructure.Repositories
 
         public async Task<Participant?> GetBySpecAsync(ISpecification<Participant> spec, CancellationToken ct = default)
         {
-            var query = SpecificationEvaluator.GetQuery(_context.Participants.AsQueryable(), spec);
+            var query = SpecificationEvaluator.GetQuery(_context.Participants.AsNoTracking(), spec);
             return await query.FirstOrDefaultAsync(ct);
         }
 

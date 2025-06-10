@@ -19,7 +19,7 @@ namespace Events.Infrastructure.Repositories
 
         public virtual async Task<IEnumerable<T>> ListAsync(ISpecification<T> spec, CancellationToken ct = default)
         {
-            var query = SpecificationEvaluator.GetQuery(_context.Set<T>().AsQueryable(), spec);
+            var query = SpecificationEvaluator.GetQuery(_context.Set<T>().AsNoTracking(), spec);
             return await query.ToListAsync(ct);
         }
 

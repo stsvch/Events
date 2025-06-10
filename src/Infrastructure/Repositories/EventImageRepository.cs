@@ -14,6 +14,7 @@ namespace Events.Infrastructure.Repositories
     CancellationToken cancellationToken = default)
         {
             return await _context.Set<EventImage>()
+                                 .AsNoTracking()
                                  .Where(img => img.EventId == eventId)
                                  .ToListAsync(cancellationToken);
         }
