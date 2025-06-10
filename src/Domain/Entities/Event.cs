@@ -1,7 +1,4 @@
 using Events.Domain.Exceptions;
-using Events.Domain.ValueObjects;
-using System;
-
 namespace Events.Domain.Entities
 {
     public class Event

@@ -1,6 +1,5 @@
 ﻿using Events.Application.Commands;
 using FluentValidation;
-using System;
 
 namespace Events.Application.Validators
 {

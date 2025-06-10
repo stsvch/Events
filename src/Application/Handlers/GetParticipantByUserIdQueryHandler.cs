@@ -4,11 +4,7 @@ using Events.Application.Queries;
 using Events.Domain.Repositories;
 using Events.Domain.Specifications;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+
 
 namespace Events.Application.Handlers
 {

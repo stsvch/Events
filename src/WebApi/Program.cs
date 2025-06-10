@@ -1,12 +1,9 @@
 using Events.Application.Extensions;
-using Events.Application.Interfaces;
 using Events.Infrastructure.Extensions;
 using Events.Infrastructure.Persistence;
-using Events.Infrastructure.Services.Images;
 using Events.WebApi;
 using Events.WebApi.Middleware;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);

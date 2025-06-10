@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using Events.Application.Commands;
+﻿using Events.Application.Commands;
 using Events.Application.DTOs;
 using Events.Application.Queries;
 using Events.WebApi.DTOs.Requests;

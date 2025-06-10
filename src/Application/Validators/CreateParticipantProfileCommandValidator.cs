@@ -1,5 +1,4 @@
-﻿using System;
-using Events.Application.Commands;
+﻿using Events.Application.Commands;
 using FluentValidation;
 
 namespace Events.Application.Validators

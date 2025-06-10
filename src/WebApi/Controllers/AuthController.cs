@@ -1,11 +1,9 @@
-﻿using Duende.IdentityServer.Models;
-using Events.Application.Commands;
+﻿using Events.Application.Commands;
 using Events.Application.Interfaces;
 using Events.WebApi.DTOs.Requests;
 using Events.WebApi.DTOs.Responses;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Events.WebApi.Controllers

@@ -3,8 +3,6 @@ using Events.Application.Commands;
 using Events.Application.DTOs;
 using Events.Domain.Entities;
 using Events.Domain.ValueObjects;
-using System;
-using System.Collections.Generic;
 
 namespace Events.Application.Mappings
 {

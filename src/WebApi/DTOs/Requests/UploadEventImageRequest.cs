@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-
+﻿
 namespace Events.WebApi.DTOs.Requests
 {
     public class UploadEventImageRequest

@@ -1,5 +1,4 @@
 ﻿using Duende.IdentityServer.EntityFramework.Options;
-using Duende.IdentityServer.Models;
 using Events.Infrastructure.Identity;
 using Microsoft.AspNetCore.ApiAuthorization.IdentityServer;
 using Microsoft.EntityFrameworkCore;

@@ -1,6 +1,5 @@
 ﻿using Events.Domain.Entities;
 using Events.Domain.ValueObjects;
-using Events.Infrastructure.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

@@ -6,9 +6,6 @@ using Events.Domain.Entities;
 using Events.Domain.Repositories;
 using Events.Domain.Specifications;
 using MediatR;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Events.Application.Handlers
 {

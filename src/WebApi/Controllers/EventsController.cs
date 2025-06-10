@@ -1,6 +1,5 @@
 ﻿using Events.Application.Commands;
 using Events.Application.DTOs;
-using Events.Application.Interfaces;
 using Events.Application.Queries;
 using Events.Domain.Common;
 using Events.Domain.Exceptions;
@@ -8,7 +7,6 @@ using Events.WebApi.DTOs.Requests;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.StaticFiles;
 using System.Security.Claims;
 
 namespace Events.WebApi.Controllers

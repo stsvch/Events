@@ -1,4 +1,3 @@
-using Events.Domain.Exceptions;
 using Events.Domain.ValueObjects;
 
 namespace Events.Domain.Entities

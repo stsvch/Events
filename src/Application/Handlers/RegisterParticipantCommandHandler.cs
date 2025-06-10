@@ -1,9 +1,7 @@
 ﻿using Events.Application.Commands;
-using Events.Domain.Entities;
 using Events.Domain.Exceptions;
 using Events.Domain.Repositories;
 using Events.Domain.Specifications;
-using Events.Domain.ValueObjects;
 using MediatR;
 
 namespace Events.Application.Handlers
